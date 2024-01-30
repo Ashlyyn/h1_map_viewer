@@ -29,7 +29,7 @@ void inline R_SetUniform(
     const std::vector<float>& value
 ) {
     int location = glGetUniformLocation(program, name.c_str());
-    glUniform1fv(location, value.size(), value.data());
+    glUniform1fv(location, (GLsizei)value.size(), value.data());
 }
 
 void inline R_SetUniform(
@@ -73,7 +73,7 @@ void inline R_SetUniform(
     const std::vector<int>& value
 ) {
     int location = glGetUniformLocation(program, name.c_str());
-    glUniform1iv(location, value.size(), value.data());
+    glUniform1iv(location, (GLsizei)value.size(), value.data());
 }
 
 void inline R_SetUniform(
@@ -117,7 +117,7 @@ void inline R_SetUniform(
     const std::vector<unsigned int>& value
 ) {
     int location = glGetUniformLocation(program, name.c_str());
-    glUniform1uiv(location, value.size(), value.data());
+    glUniform1uiv(location, (GLsizei)value.size(), value.data());
 }
 
 void inline R_SetUniform(

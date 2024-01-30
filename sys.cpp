@@ -35,7 +35,7 @@ void Sys_Init() {
     );
 
     SDL_GetWindowPosition(g_sdlWindow, &vid_xpos, &vid_ypos);
-    SDL_SetRelativeMouseMode(true);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     if (g_sdlWindow == NULL) {
         printf("Could not create window: %s\n", SDL_GetError());

@@ -11,11 +11,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "com_print.hpp"
-#include "fs.hpp"
+#include "fs_files.hpp"
 #include "gfx.hpp"
 #include "gfx_backend.hpp"
 #include "gfx_uniform.hpp"
-#include "cgame.hpp"
+#include "cg_cgame.hpp"
 
 extern int vid_width, vid_height;
 
@@ -49,6 +49,7 @@ void R_Init() {
     assert(R_CreateFont("consola.ttf", 0, 48, r_font));
 
     //R_InitCubePrim(r_cubePrim);
+     
     //glEnable(GL_POINT_SMOOTH);
     //glPointSize(4);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
@@ -104,7 +105,7 @@ static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
     );
     glEnableVertexAttribArray(1);
 
-    assert(R_LoadImage("container.jpg", NULL, NULL, NULL, cubePrim.tex));
+    assert(R_LoadImage("container.jpg", NULL, NULL, cubePrim.tex));
 
     glUseProgram(cubePrim.prog.program);
     R_SetUniform(
@@ -143,15 +144,15 @@ static bool R_CompileShader(
     glShaderSource(shader, 1, &p, NULL);
     glCompileShader(shader);
 
-    if(log)
-        *log = std::string();
+    if (log && !log->empty())
+        log->clear();
     int success = GL_FALSE;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success && log) {
-        size_t len = 0;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, (GLint*)&len);
+        GLint len = 0;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
         log->reserve(len);
-        glGetShaderInfoLog(shader, len, (GLint*)&len, log->data());
+        glGetShaderInfoLog(shader, len, &len, log->data());
     }
     
     return success == GL_TRUE;
@@ -171,8 +172,8 @@ static bool R_LinkShaders(
     int success = GL_FALSE;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if(!success && log) {
-        size_t len = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, (GLint*)&len);
+        GLint len = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
         log->resize(len);
         glGetProgramInfoLog(program, len, NULL, log->data());
     }
@@ -185,7 +186,7 @@ static bool R_LinkShaders(
 
 bool R_LoadImage(
     std::filesystem::path path, OPTIONAL_OUT int* width, 
-    OPTIONAL_OUT int* height, OPTIONAL_OUT int* nr_channels, OUT texture_t& tex
+    OPTIONAL_OUT int* height, OUT texture_t& tex
 ) {
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -265,8 +266,13 @@ bool R_CreateFont(
         g_subTexDefs.data(), 
         GL_STATIC_DRAW
     );
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(GfxSubTexDef), 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GfxSubTexDef), 0);
+    glVertexAttribPointer(
+        1, 2, GL_FLOAT, GL_FALSE, 
+        sizeof(GfxSubTexDef), (void*)(2 * sizeof(float))
+    );
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     glGenTextures(1, &f.tex);
     glActiveTexture(GL_TEXTURE0);
@@ -308,22 +314,25 @@ bool R_CreateFont(
     }
 
     if (!R_CompileShader(
-        FS_ReadFileText(
-            "text.vs.glsl"), GL_VERTEX_SHADER, NULL, f.prog.vertex_shader
-        )
-    ) {
+        FS_ReadFileText("text.vs.glsl"), 
+        GL_VERTEX_SHADER, NULL, f.prog.vertex_shader
+    )) {
+        Font_Unload(fd);
         return false;
     }
+
     if (!R_CompileShader(
-        FS_ReadFileText(
-            "text.fs.glsl"), GL_FRAGMENT_SHADER, NULL, f.prog.fragment_shader
-        )
-    ) {
+        FS_ReadFileText("text.fs.glsl"),
+        GL_FRAGMENT_SHADER, NULL, f.prog.fragment_shader
+    )) {
+        Font_Unload(fd);
         return false;
     }
+
     if (!R_LinkShaders(
-        f.prog.vertex_shader, f.prog.fragment_shader, NULL, f.prog.program)
-    ) {
+        f.prog.vertex_shader, f.prog.fragment_shader, NULL, f.prog.program
+    )) {
+        Font_Unload(fd);
         return false;
     }
 
@@ -480,7 +489,7 @@ static void R_DrawFrameInternal(uint64_t deltaTime) {
     };
     */
 
-    glClearColor(0.2, 0.3, 0.3, 1.0);
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     /*
