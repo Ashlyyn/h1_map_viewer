@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#if defined _WIN32 || defined _WIN64
+#ifdef _WIN32
 #define TARGET_OS_IS_WINDOWS 1
 #endif // _WIND32
 
@@ -10,12 +10,18 @@
 #define NO_DISCARD [[nodiscard]]
 
 #if TARGET_OS_IS_WINDOWS
+#ifdef IN
+#undef IN
+#endif
 #define IN _In_
 #else // TARGET_OS_IS_WINDOWS
 #define IN
 #endif // TARGET_OS_IS_WINDOWS
 
 #if TARGET_OS_IS_WINDOWS
+#ifdef OUT
+#undef OUT
+#endif
 #define OUT _Out_
 #else // TARGET_OS_IS_WINDOWS
 #define OUT

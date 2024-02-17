@@ -9,6 +9,7 @@ struct CGameClient {
 	GfxCamera camera;
 } cg;
 
+float cg_fov;
 float cg_baseVelocity;
 float cg_sensitivity;
 
@@ -27,6 +28,7 @@ void CG_Init() {
 	s_lastMouseX = IN_Mouse_X();
 	s_lastMouseY = IN_Mouse_Y();
 
+	cg_fov = 120.0f;
 	cg_baseVelocity = 2.5f;
 	cg_sensitivity  = 0.1f;
 }
@@ -91,7 +93,6 @@ void CG_Look(float x, float y) {
 		sin(glm::radians(cg.camera.yaw)) * cos(glm::radians(cg.camera.pitch));
 	cg.camera.front = glm::normalize(front);
 }
-	
 
 void CG_Frame(uint64_t deltaTime) {
 	float vel = 2.5f * ((float)deltaTime / 1000.0f);
@@ -120,4 +121,12 @@ void CG_Frame(uint64_t deltaTime) {
 
 GfxCamera& CG_Camera() {
 	return cg.camera;
+}
+
+float CG_Fov() {
+	return cg_fov;
+}
+
+void CG_Shutdown() {
+
 }

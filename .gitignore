@@ -2,16 +2,11 @@
 /.vscode
 CMakeSettings.json
 /deps/*
-/Debug
-/Release
+/build
 *.png
 *.jpg
 *.ttf
 *.dll
 *.cmake
-/out
-/*.dir
-ft2build.h
 *.sln
 *.vcxproj*
-/x64

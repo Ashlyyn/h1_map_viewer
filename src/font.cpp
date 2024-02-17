@@ -1,5 +1,6 @@
 #include "font.hpp"
 #include "com_print.hpp"
+#include "db_files.hpp"
 
 static FT_Library s_ft;
 
@@ -9,11 +10,19 @@ void Font_Init() {
 }
 
 bool Font_Load(
-	std::filesystem::path font_path, int width, int height, OUT FontDef& fd
+	std::string_view font_name, int width, int height, OUT FontDef& fd
 ) {
+	fd = FontDef{};
+
+	std::vector<std::byte> font_buf = DB_LoadFont(font_name);
+	if (font_buf.empty()) {
+		Com_Println(CON_DEST_ERR, "Failed to open font '{}'.", font_name);
+		return false;
+	}
+
 	FT_Face face;
-	if (FT_New_Face(s_ft, font_path.string().c_str(), 0, &face)) {
-		Com_Println(CON_DEST_ERR, "Failed to open font {}.", font_path.string());
+	if (FT_New_Memory_Face(s_ft, (FT_Byte*)font_buf.data(), font_buf.size(), 0, &face)) {
+		Com_Println(CON_DEST_ERR, "Failed to create font '{}'.", font_name);
 		return false;
 	}
 
@@ -23,17 +32,17 @@ bool Font_Load(
 		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
 			Com_DPrintln(
 				"Failed to load glyph '{}' from font {}.", 
-				c, font_path.string()
+				c, font_name
 			);
 
 		GlyphDef glyph;
-		glyph.width = face->glyph->bitmap.width;
-		glyph.height = face->glyph->bitmap.rows;
-		glyph.left = face->glyph->bitmap_left;
-		glyph.top = face->glyph->bitmap_top;
+		glyph.width     = face->glyph->bitmap.width;
+		glyph.height    = face->glyph->bitmap.rows;
+		glyph.left      = face->glyph->bitmap_left;
+		glyph.top       = face->glyph->bitmap_top;
 		glyph.advance_x = face->glyph->advance.x;
 		glyph.advance_y = face->glyph->advance.y;
-		glyph.pixels = std::vector<unsigned char>(glyph.width * glyph.height);
+		glyph.pixels    = std::vector<unsigned char>(glyph.width * glyph.height);
 		memcpy(
 			glyph.pixels.data(), face->glyph->bitmap.buffer,
 			glyph.pixels.size() * sizeof(*glyph.pixels.data())
@@ -42,10 +51,7 @@ bool Font_Load(
 	}
 
 	FT_Done_Face(face);
-}
-
-void Font_Unload(IN FontDef& fd) {
-
+	return true;
 }
 
 void Font_Shutdown() {

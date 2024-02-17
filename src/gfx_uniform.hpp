@@ -50,7 +50,7 @@ void inline R_SetUniform(
     shader_program_t program, const std::string& name, const glm::vec4& value
 ) {
     int location = glGetUniformLocation(program, name.c_str());
-    glUniform4f(location, value.x, value.y, value.z, value.z);
+    glUniform4f(location, value.x, value.y, value.z, value.w);
 }
 
 void inline R_SetUniform(

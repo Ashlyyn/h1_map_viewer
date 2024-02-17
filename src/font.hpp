@@ -22,8 +22,7 @@ struct FontDef {
 };
 
 void Font_Init();
-bool Font_Load(
-	std::filesystem::path font_path, int width, int height, OUT FontDef& fd
+NO_DISCARD bool Font_Load(
+	std::string_view font_name, int width, int height, OUT FontDef& fd
 );
-void Font_Unload(IN FontDef& fd);
 void Font_Shutdown();

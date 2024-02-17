@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "GL/glew.h"
 #include <glm/glm.hpp>
 #include <SDL3/SDL.h>
 
@@ -28,14 +29,21 @@ struct GfxCamera {
 	glm::vec3 worldUp;
 	glm::vec3 right;
 	glm::vec3 up;
-	float pitch;
-	float yaw;
+	float     pitch;
+	float     yaw;
+    glm::mat4 perspectiveProjection;
 };
 
 struct GfxShaderProgram {
-	shader_program_t program;
-	vertex_shader_t vertex_shader;
+	shader_program_t  program;
+	vertex_shader_t   vertex_shader;
 	fragment_shader_t fragment_shader;
+
+    ~GfxShaderProgram() {
+        glDeleteShader(fragment_shader);
+        glDeleteShader(vertex_shader);
+        glDeleteProgram(program);
+    }
 };
 
 struct GfxGlyph {
@@ -53,7 +61,12 @@ struct GfxFont {
     vao_t vao;
     vbo_t vbo;
     texture_t tex;
-    glm::mat4 projection;
+
+    ~GfxFont() {
+        glDeleteTextures(1, &tex);
+        glDeleteBuffers(1, &vbo);
+        glDeleteBuffers(1, &vao);
+    }
 };
 
 struct GfxCubePrim {

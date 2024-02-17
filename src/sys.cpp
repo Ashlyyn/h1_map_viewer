@@ -25,8 +25,6 @@ void Sys_Init() {
         
     s_timeBase = (uint64_t)SDL_GetTicks();
 
-    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
-
     g_sdlWindow = SDL_CreateWindow(
         "Halo 1 Map Viewer",
         vid_width,
@@ -72,7 +70,7 @@ bool Sys_HandleEvent() {
         case SDL_EVENT_WINDOW_RESIZED:
             vid_width = ev.window.data1;
             vid_height = ev.window.data2;
-            R_ResizeWindow();
+            R_WindowResized();
             break;
         case SDL_EVENT_WINDOW_MOVED:
             vid_xpos = ev.window.data1;
@@ -95,19 +93,18 @@ uint64_t Sys_Milliseconds() {
     return (uint64_t)SDL_GetTicks() - s_timeBase;
 }
 
+NO_RETURN Sys_Exit(int ec) {
+    exit(ec);
+}
+
 void Sys_Shutdown() {
     IN_Shutdown();
-
-    // Close and destroy the window
     SDL_DestroyWindow(g_sdlWindow);
-
-    // Clean up
     SDL_Quit();
 }
 
 NO_RETURN Sys_NormalExit(int ec) {
-    R_Shutdown();
     Com_Shutdown();
     Sys_Shutdown();
-    exit(ec);
+    Sys_Exit(ec);
 }

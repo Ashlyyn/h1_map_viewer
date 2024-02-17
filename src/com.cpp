@@ -1,5 +1,8 @@
 #include <cstdint>
 
+#include "gfx.hpp"
+#include "cg_cgame.hpp"
+
 void Sys_Init();
 bool Sys_HandleEvent();
 void R_Init();
@@ -14,11 +17,10 @@ static uint64_t s_lastFrameTime;
 //int com_maxfps = 30;
 
 bool Com_Init() {
-    Sys_Init();
-    s_lastFrameTime = Sys_Milliseconds();
     Font_Init();
     CG_Init();
     R_Init();
+    s_lastFrameTime = Sys_Milliseconds();
     return true;
 }
 
@@ -36,5 +38,7 @@ bool Com_Frame() {
 }
 
 void Com_Shutdown() {
-
+    R_Shutdown();
+    CG_Shutdown();
+    Font_Shutdown();
 }
