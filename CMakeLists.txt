@@ -57,7 +57,10 @@ else()
 endif()
 
 if(MSVC)
-	target_compile_options(h1_map_viewer PRIVATE "/permissive-" "/Zc:preprocessor" "/Zc:__cplusplus" "/Zc:__STDC__" "/W4" "/wd4005")
+	target_compile_options(h1_map_viewer PRIVATE 
+		"/permissive-" "/Zc:preprocessor" "/Zc:__cplusplus" 
+		"/Zc:__STDC__" "/W4" "/wd4005" "/WX"
+	)
 elseif(CLANG OR GCC)
 	target_compile_options(h1_map_viewer PRIVATE "-pedantic-errors")
 endif()
