@@ -52,20 +52,20 @@ set_property(TARGET sdl_image PROPERTY IMPORTED_IMPLIB_RELEASE
 	deps/SDL_image_build/Debug/SDL3_image
 )
 if(WIN32)
-	set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_DEBUG 
+	set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_RELEASE
 		deps/SDL_image_build/Debug/SDL3_image.dll
 	)
 elseif(APPLE)
-set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_DEBUG 
+set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_RELEASE
 		deps/SDL_image_build/Debug/SDL3_image.dylib
 	)
 elseif(UNIX)
-	set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_DEBUG 
+	set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_RELEASE
 		deps/SDL_image_build/Debug/SDL3_image.so
 	)
 else()
 	message("what the hell platform are you building this for?")
-	set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_DEBUG 
+	set_property(TARGET sdl_image PROPERTY IMPORTED_LOCATION_RELEASE
 		deps/SDL_image_build/Debug/SDL3_image
 	)
 endif()
@@ -96,20 +96,20 @@ set_property(TARGET sdl PROPERTY IMPORTED_IMPLIB_RELEASE
 	deps/SDL_image/external/SDL_build/Debug/SDL3
 )
 if(WIN32)
-	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_DEBUG 
+	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_RELEASE
 		deps/SDL_image/external/SDL_build/Debug/SDL3.dll
 	)
 elseif(APPLE)
-	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_DEBUG 
+	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_RELEASE 
 		deps/SDL_image/external/SDL_build/Debug/SDL3.dylib
 	)
 elseif(UNIX)
-	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_DEBUG 
+	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_RELEASE 
 		deps/SDL_image/external/SDL_build/Debug/SDL3.so
 	)
 else()
 	message("what the hell platform are you building this for?")
-	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_DEBUG 
+	set_property(TARGET sdl PROPERTY IMPORTED_LOCATION_RELEASE
 		deps/SDL_image/external/SDL_build/Debug/SDL3
 	)
 endif()
