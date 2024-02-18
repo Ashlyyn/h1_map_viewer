@@ -10,8 +10,11 @@ void IN_Key_Init();
 NO_DISCARD bool  IN_Key_IsDown(SDL_Keycode k);
 NO_DISCARD bool  IN_Key_IsUp(SDL_Keycode k);
 NO_DISCARD bool  IN_Key_IsToggled(SDL_Keycode k);
+NO_DISCARD bool  IN_Key_WasPressedOnCurrentFrame(SDL_Keycode k);
+NO_DISCARD std::span<int> IN_Key_AllPressedOnCurrentFrame();
            bool  IN_Key_Down(SDL_Keycode k);
            bool  IN_Key_Up(SDL_Keycode k);
+NO_DISCARD char  IN_Key_Char(SDL_Keycode k);
 void IN_Key_Shutdown();
 	  
 void IN_Mouse_Init();
@@ -24,4 +27,5 @@ NO_DISCARD float IN_Mouse_X();
 NO_DISCARD float IN_Mouse_Y();
 void IN_Mouse_Shutdown();
 
+void IN_Frame();
 void IN_Shutdown();

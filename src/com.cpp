@@ -8,6 +8,7 @@
 #include "cmd_commands.hpp"
 #include "dvar.hpp"
 #include "con_console.hpp"
+#include "input.hpp"
 
 void Sys_Init();
 bool Sys_HandleEvent();
@@ -46,6 +47,8 @@ bool Com_Frame() {
     s_deltaTime = Sys_Milliseconds() - s_lastFrameTime;
     s_lastFrameTime = Sys_Milliseconds();
 
+    IN_Frame();
+
     while (Sys_HandleEvent())
         ;
 
@@ -54,13 +57,11 @@ bool Com_Frame() {
     DevGui_Frame();
     R_DrawFrame(s_deltaTime);
 
-    if (DevCon_HasText()) {
+    if (DevCon_HasText())
         Con_ProcessInput(DevCon_TakeText());
-    }
 
-    if(DevGui_HasText()) {
-        Con_ProcessInput(DevCon_TakeText());
-    }
+    if(DevGui_HasText())
+        Con_ProcessInput(DevGui_TakeText());
 
 	return true;
 }
