@@ -39,12 +39,20 @@
 #define OPTIONAL_OUT
 #endif // TARGET_OS_IS_WINDOWS
 
+#if TARGET_OS_IS_WINDOWS
+#define OPTIONAL_IN _In_opt_
+#else // TARGET_OS_IS_WINDOWS
+#define OPTIONAL_IN
+#endif // TARGET_OS_IS_WINDOWS
+
 // can't #include sys.hpp because sys.hpp #includes this file
 NO_RETURN Sys_NormalExit(int ec);
 uint64_t Sys_Milliseconds();
 
 #define NOP() ;
 
-bool Com_Init();
-bool Com_Frame();
-void Com_Shutdown();
+bool     Com_Init();
+bool     Com_Frame();
+uint64_t Com_LastFrameTime();
+uint64_t Com_LastFrameTimeDelta();
+void     Com_Shutdown();

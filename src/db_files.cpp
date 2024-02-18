@@ -22,21 +22,30 @@ std::string_view DB_AssetDirForType(AssetType at) {
 	return s_assetDirs.at(at);
 }
 
-static const std::filesystem::path ASSETS_BASE_DIR = std::filesystem::path("../../../assets");
+static const std::filesystem::path ASSETS_BASE_DIR = 
+	std::filesystem::path("../../../assets");
 
-NO_DISCARD std::filesystem::path DB_AssetPath(AssetType at, std::string_view assetName) {
-	return std::filesystem::path(ASSETS_BASE_DIR) / DB_AssetDirForType(at) / assetName;
+NO_DISCARD std::filesystem::path DB_AssetPath(
+	AssetType at, std::string_view assetName
+) {
+	return std::filesystem::path(ASSETS_BASE_DIR) / 
+		DB_AssetDirForType(at) / 
+		assetName;
 }
 
 NO_DISCARD std::filesystem::path DB_ImagePath(std::string_view image_name) {
 	return DB_AssetPath(AT_IMAGE, image_name);
 }
 
-std::string DB_LoadAsset_Text(AssetType assetType, std::string_view assetName) {
+std::string DB_LoadAsset_Text(
+	AssetType assetType, std::string_view assetName
+) {
 	return FS_ReadFileText(DB_AssetPath(assetType, assetName));
 }
 
-std::vector<std::byte> DB_LoadAsset_Binary(AssetType assetType, std::string_view assetName) {
+std::vector<std::byte> DB_LoadAsset_Binary(
+	AssetType assetType, std::string_view assetName
+) {
 	return FS_ReadFile(DB_AssetPath(assetType, assetName));
 }
 

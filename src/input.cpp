@@ -22,7 +22,9 @@ struct Mouse {
 
 struct Key {
 	bool down;
+	bool toggle;
 	std::string bind;
+	std::string bind2;
 };
 
 static std::array<
@@ -31,7 +33,7 @@ static std::array<
 
 static std::array<Mouse, MAX_LOCAL_CLIENTS> s_playerMouse;
 
-static int IN_Mouse_SDLButtonToIndex(Uint8 button) {
+static constexpr int IN_Mouse_SDLButtonToIndex(Uint8 button) {
 	switch (button) {
 	case SDL_BUTTON_LEFT:
 		return 0;
@@ -66,9 +68,15 @@ NO_DISCARD bool IN_Key_IsUp(SDL_Keycode k) {
 	return s_playerKeys.at(0)[k].down == false;
 }
 
+NO_DISCARD bool IN_Key_IsToggled(SDL_Keycode k) {
+	return s_playerKeys.at(0)[k].toggle;
+}
+
 bool IN_Key_Down(SDL_Keycode k) {
 	bool b = IN_Key_IsDown(k);
-	s_playerKeys.at(0)[k].down = true;
+	auto& key = s_playerKeys.at(0)[k];
+	key.down = true;
+	key.toggle = !key.toggle;
 	return b;
 }
 
@@ -76,6 +84,21 @@ bool IN_Key_Up(SDL_Keycode k) {
 	bool b = IN_Key_IsUp(k);
 	s_playerKeys.at(0)[k].down = false;
 	return b;
+}
+
+std::string_view IN_Key_GetBinding(SDL_Keycode k, bool secondary) {
+	if (secondary)
+		return s_playerKeys.at(0)[k].bind2;
+	else
+		return s_playerKeys.at(0)[k].bind;
+}
+
+SDL_Keycode IN_Key_GetNum(std::string_view binding) {
+	for (const auto& c : s_playerKeys.at(0))
+		if (c.second.bind == binding || c.second.bind2 == binding)
+			return c.first;
+
+	return -1;
 }
 
 void IN_Key_Shutdown() {

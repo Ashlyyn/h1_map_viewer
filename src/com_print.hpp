@@ -1,4 +1,10 @@
+#pragma once
+
 #include <format>
+#include <vector>
+#include <array>
+
+#include <glm/glm.hpp>
 
 #include "com_defs.hpp"
 
@@ -27,12 +33,204 @@ void inline Com_PrintMessage(
         printf(fmt, msg.data());
 }
 
+template<typename ...Args>
+std::string inline Com_Format(std::string_view fmt, Args&&... args) {
+    return std::vformat(fmt, std::make_format_args(args...));
+}
+
+std::string inline Com_ToLower(std::string_view sv) {
+    std::string s;
+    for (auto c : sv)
+        s.push_back(tolower(c));
+    return s;
+}
+
+bool inline Com_Split(std::string_view s, OUT std::vector<std::string>& v) {
+    v = std::vector<std::string>();
+
+    if (s.empty())
+        return false;
+
+    size_t pos_start = 0, pos_end;
+    std::string token;
+
+    while ((pos_end = s.find(' ', pos_start)) != std::string::npos) {
+        token = s.substr(pos_start, pos_end - pos_start);
+        pos_start = pos_end + 1;
+        if ((token.find_first_not_of(" \n") != std::string::npos) && !token.empty())
+            v.push_back(token);
+    }
+
+    token = s.substr(pos_start);
+    if ((token.find_first_not_of(" \n") != std::string::npos) && !token.empty())
+        v.push_back(token);
+
+    return true;
+}
+
+bool inline Com_Parse(std::string_view s, OUT bool& value) {
+    value = false;
+
+    int i = 0;
+    auto r = std::from_chars(s.data(), s.data() + s.size(), i);
+    if (r.ec == std::errc()) {
+        value = i != 0;
+        return true;
+    } else if (r.ec == std::errc::invalid_argument) {
+        if (Com_ToLower(s) == "true") {
+            value = true;
+            return true;
+        } else if (Com_ToLower(s) == "false") {
+            value = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool inline Com_Parse(std::string_view s, OUT int& value) {
+    value = 0;
+
+    auto r = std::from_chars(s.data(), s.data() + s.size(), value);
+    if (r.ec == std::errc()) {
+        return true;
+    }
+
+    return false;
+}
+
+bool inline Com_Parse(std::string_view s, OUT float& value) {
+    value = 0.0f;
+    auto r = std::from_chars(s.data(), s.data() + s.size(), value);
+    if (r.ec == std::errc()) {
+        return true;
+    }
+
+    return false;
+}
+
+bool inline Com_Parse(const std::array<std::string_view, 2>& v, OUT glm::vec2& value) {
+    value = glm::vec2(0.0f, 0.0f);
+
+    float x = 0.0f;
+    std::string_view xs = std::string_view(v[0]);
+    auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
+    if (rx.ec != std::errc()) {
+        return false;
+    }
+
+    float y = 0.0f;
+    std::string_view ys = std::string_view(v[1]);
+    auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
+    if (ry.ec != std::errc()) {
+        return false;
+    }
+
+    value = glm::vec2(x, y);
+
+    return true;
+}
+
+bool inline Com_Parse(std::string_view s, OUT glm::vec2& value) {
+    std::vector<std::string> v;
+    Com_Split(s, v);
+
+    if (v.size() < 2)
+        return false;
+
+    return Com_Parse(std::array<std::string_view, 2> { v[0], v[1] }, value);
+}
+
+bool inline Com_Parse(const std::array<std::string_view, 3>& v, OUT glm::vec3& value) {
+    value = glm::vec3(0.0f, 0.0f, 0.0f);
+
+    float x = 0.0f;
+    std::string_view xs = std::string_view(v[0]);
+    auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
+    if (rx.ec != std::errc()) {
+        return false;
+    }
+
+    float y = 0.0f;
+    std::string_view ys = std::string_view(v[1]);
+    auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
+    if (ry.ec != std::errc()) {
+        return false;
+    }
+
+    float z = 0.0f;
+    std::string_view zs = std::string_view(v[2]);
+    auto rz = std::from_chars(zs.data(), zs.data() + zs.size(), z);
+    if (rz.ec != std::errc()) {
+        return false;
+    }
+
+    value = glm::vec3(x, y, z);
+
+    return true;
+}
+
+bool inline Com_Parse(std::string_view s, OUT glm::vec3& value) {
+    std::vector<std::string> v;
+    Com_Split(s, v);
+
+    if (v.size() < 3)
+        return false;
+
+    return Com_Parse(std::array<std::string_view, 3> { v[0], v[1], v[2] }, value);
+}
+
+bool inline Com_Parse(const std::array<std::string_view, 4>& v, OUT glm::vec4& value) {
+    value = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    float x = 0.0f;
+    std::string_view xs = std::string_view(v[0]);
+    auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
+    if (rx.ec != std::errc()) {
+        return false;
+    }
+
+    float y = 0.0f;
+    std::string_view ys = std::string_view(v[1]);
+    auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
+    if (ry.ec != std::errc()) {
+        return false;
+    }
+
+    float z = 0.0f;
+    std::string_view zs = std::string_view(v[2]);
+    auto rz = std::from_chars(zs.data(), zs.data() + zs.size(), z);
+    if (ry.ec != std::errc()) {
+        return false;
+    }
+
+    float w = 0.0f;
+    std::string_view ws = std::string_view(v[3]);
+    auto rw = std::from_chars(ws.data(), ws.data() + ws.size(), w);
+    if (rw.ec != std::errc()) {
+        return false;
+    }
+
+    value = glm::vec4(x, y, z, w);
+
+    return true;
+}
+
+bool inline Com_Parse(std::string_view s, OUT glm::vec4& value) {
+    std::vector<std::string> v;
+    Com_Split(s, v);
+
+    if (v.size() < 4)
+        return false;
+
+    return Com_Parse(std::array<std::string_view, 4> { v[0], v[1], v[2], v[3] }, value);
+}
 
 template<typename ...Args>
 void inline Com_Print(
     print_msg_dest_t dest, std::string_view fmt, Args&&... args
 ) {
-    Com_PrintMessage(dest, std::vformat(fmt, std::make_format_args(args...)));
+    Com_PrintMessage(dest, Com_Format(fmt, args...));
 }
 
 // Shorthand for Com_Print(dest, "{}", t)
@@ -45,7 +243,7 @@ template<typename ...Args>
 void inline Com_Println(
     print_msg_dest_t dest, std::string_view fmt, Args&&... args
 ) {
-    Com_Print(dest, "{}\n", std::vformat(fmt, std::make_format_args(args...)));
+    Com_Print(dest, "{}\n", Com_Format(fmt, args...));
 }
 
 // Shorthand for Com_Println(dest, "")
@@ -101,7 +299,7 @@ void inline Com_DPrintln(
     print_msg_dest_t dest, std::string_view fmt, Args&&... args
 ) {
     Com_DPrint(
-        dest, "{}\n", std::vformat(fmt, std::make_format_args(args...))
+        dest, "{}\n", Com_Format(fmt, args...)
     );
 }
 
@@ -137,7 +335,7 @@ template<typename ...Args>
 NO_RETURN inline Com_Error(int ec, std::string_view fmt, Args&&... args) {
     Com_Print(
         CON_DEST_FATAL_ERR, "FATAL ERROR: {}",
-        std::vformat(fmt, std::make_format_args(args...))
+        Com_Format(fmt, args...)
     );
     Sys_NormalExit(ec);
 }
@@ -164,7 +362,7 @@ template<typename ...Args>
 NO_RETURN inline Com_Errorln(int ec, std::string_view fmt, Args&&... args) {
     Com_Println(
         CON_DEST_FATAL_ERR, "FATAL ERROR: {}",
-        std::vformat(fmt, std::make_format_args(args...))
+        Com_Format(fmt, args...)
     );
     Sys_NormalExit(ec);
 }

@@ -8,17 +8,19 @@
 #include "sys.hpp"
 #include "gfx.hpp"
 #include "input.hpp"
+#include "devcon.hpp"
 
 SDL_Window* g_sdlWindow;
-
-constexpr int VID_WIDTH_DEFAULT  = 1024;
-constexpr int VID_HEIGHT_DEFAULT = 768;
 
 int vid_xpos, vid_ypos;
 int vid_width  = VID_WIDTH_DEFAULT;
 int vid_height = VID_HEIGHT_DEFAULT;
 
 static uint64_t s_timeBase;
+
+void Sys_InitThreads() {
+    assert(Sys_SpawnDevConThread(DevCon_Thread));
+}
 
 void Sys_Init() {
     SDL_Init(SDL_INIT_VIDEO);
@@ -40,6 +42,7 @@ void Sys_Init() {
         Sys_NormalExit(-2);
     }
 
+    Sys_InitThreads();
     IN_Init();
 }
 
@@ -91,6 +94,31 @@ bool Sys_HandleEvent() {
 
 uint64_t Sys_Milliseconds() {
     return (uint64_t)SDL_GetTicks() - s_timeBase;
+}
+
+std::array<SDL_Thread*, 32> sys_hThreads;
+std::array<int(*)(void*), 32> sys_threadFuncs;
+
+int Sys_ThreadMain(void* data) {
+    return sys_threadFuncs.at((size_t)data)(data);
+}
+
+bool Sys_CreateThread(thread_t thread, const std::string& name, int(*f)(void*)) {
+    sys_threadFuncs.at(thread) = f;
+    SDL_Thread* t = SDL_CreateThread(Sys_ThreadMain, name.c_str(), (void*)thread);
+    if (t == nullptr)
+        return false;
+
+    sys_hThreads.at(thread) = t;
+    return true;
+}
+
+void Sys_DestroyThread(thread_t thread) {
+    
+}
+
+bool Sys_SpawnDevConThread(int(*DevConThread)(void*)) {
+    return Sys_CreateThread(THREAD_DEVCON, "devcon", DevConThread);
 }
 
 NO_RETURN Sys_Exit(int ec) {
