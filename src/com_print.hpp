@@ -3,6 +3,7 @@
 #include <format>
 #include <vector>
 #include <array>
+#include <deque>
 
 #include <glm/glm.hpp>
 
@@ -45,8 +46,8 @@ std::string inline Com_ToLower(std::string_view sv) {
     return s;
 }
 
-bool inline Com_Split(std::string_view s, OUT std::vector<std::string>& v) {
-    v = std::vector<std::string>();
+bool inline Com_Split(std::string_view s, OUT std::deque<std::string>& v) {
+    v = std::deque<std::string>(); 
 
     if (s.empty())
         return false;
@@ -132,7 +133,7 @@ bool inline Com_Parse(const std::array<std::string_view, 2>& v, OUT glm::vec2& v
 }
 
 bool inline Com_Parse(std::string_view s, OUT glm::vec2& value) {
-    std::vector<std::string> v;
+    std::deque<std::string> v;
     Com_Split(s, v);
 
     if (v.size() < 2)
@@ -171,7 +172,7 @@ bool inline Com_Parse(const std::array<std::string_view, 3>& v, OUT glm::vec3& v
 }
 
 bool inline Com_Parse(std::string_view s, OUT glm::vec3& value) {
-    std::vector<std::string> v;
+    std::deque<std::string> v;
     Com_Split(s, v);
 
     if (v.size() < 3)
@@ -217,7 +218,7 @@ bool inline Com_Parse(const std::array<std::string_view, 4>& v, OUT glm::vec4& v
 }
 
 bool inline Com_Parse(std::string_view s, OUT glm::vec4& value) {
-    std::vector<std::string> v;
+    std::deque<std::string> v;
     Com_Split(s, v);
 
     if (v.size() < 4)
@@ -225,6 +226,39 @@ bool inline Com_Parse(std::string_view s, OUT glm::vec4& value) {
 
     return Com_Parse(std::array<std::string_view, 4> { v[0], v[1], v[2], v[3] }, value);
 }
+
+template<>
+struct std::formatter<glm::vec2> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    auto format(const glm::vec2& v, std::format_context& ctx) const {
+        return std::format_to(ctx.out(), "{} {}", v.x, v.y);
+    }
+};
+
+template<>
+struct std::formatter<glm::vec3> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    auto format(const glm::vec3& v, std::format_context& ctx) const {
+        return std::format_to(ctx.out(), "{} {} {}", v.x, v.y, v.z);
+    }
+};
+
+template<>
+struct std::formatter<glm::vec4> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    auto format(const glm::vec4& v, std::format_context& ctx) const {
+        return std::format_to(ctx.out(), "{} {} {} {}", v.x, v.y, v.z, v.w);
+    }
+};
 
 template<typename ...Args>
 void inline Com_Print(

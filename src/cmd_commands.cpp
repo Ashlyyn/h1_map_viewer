@@ -13,13 +13,23 @@ void Cmd_Init() {
 	s_cmds.clear();
 }
 
+void Cmd_ArgsPushFront(const std::string& arg) {
+	cmd_args.args.push_front(arg);
+}
+
 bool Cmd_AddCommand(std::string_view cmdName, std::function<void(void)> fn) {
 	bool exists = s_cmds.contains(cmdName);
 	s_cmds[cmdName] = fn;
 	return exists;
 }
 
-bool Cmd_GetCommand(std::string_view cmdName, OUT std::function<void(void)>& fn) {
+bool Cmd_CommandExists(std::string_view cmdName) {
+	return s_cmds.contains(cmdName);
+}
+
+bool Cmd_FindCommand(std::string_view cmdName, OUT std::function<void(void)>& fn) {
+	fn = std::function<void(void)>();
+
 	if (!s_cmds.contains(cmdName))
 		return false;
 

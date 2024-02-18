@@ -59,8 +59,31 @@ bool Com_Frame() {
         Cmd_TakeInput(text);
 
         std::function<void(void)> fn;
-        if (Cmd_GetCommand(Cmd_Argv(0), fn))
+        if (Cmd_FindCommand(Cmd_Argv(0), fn)) {
             fn();
+        } else {
+            dvar_t* d = Dvar_Find(std::string(Cmd_Argv(0)));
+            if (d != nullptr) {
+                std::deque<std::string> v;
+
+                if (Cmd_Argc() == 1) {
+                    Com_Println(CON_DEST_OUT, "{}", Dvar_GetString(*d));
+                } else {
+                    v.push_back(std::string(Cmd_Argv(1)));
+
+                    if (Dvar_IsVec2(*d) || Dvar_IsVec3(*d) || Dvar_IsVec4(*d))
+                        v.push_back(std::string(Cmd_Argv(2)));
+
+                    if (Dvar_IsVec3(*d) || Dvar_IsVec4(*d))
+                        v.push_back(std::string(Cmd_Argv(3)));
+
+                    if (Dvar_IsVec4(*d))
+                        v.push_back(std::string(Cmd_Argv(4)));
+
+                    Dvar_SetFromString(*d, DVAR_FLAG_NONE, v);
+                }
+            }
+        }
     }
 
 	return true;

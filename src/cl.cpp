@@ -29,7 +29,6 @@ void CL_Init() {
 
 	cl_drawDevGui = false;
 	CL_SetKeyFocus(KF_GAME);
-	Cmd_AddCommand("cl_drawfps", CL_DrawFps_f);
 }
 
 void CL_EnableFpsCounter(bool enable) {
@@ -38,21 +37,6 @@ void CL_EnableFpsCounter(bool enable) {
 
 void CL_DrawFps() {
 	R_UpdateTextDraw(cl_fpsTextDrawId, Com_Format("FPS: {:.0f}", 1000.0f / (float)s_lastFpsDrawDelta));
-}
-
-void CL_DrawFps_f() {
-	int argc = Cmd_Argc();
-	std::string_view enable = Cmd_Argv(1);
-	int i = 0;
-	auto r = std::from_chars(enable.data(), enable.data() + enable.size(), i);
-	if (r.ec == std::errc()) {
-		CL_EnableFpsCounter(i != 0);
-	} else if (r.ec == std::errc::invalid_argument) {
-		if (Com_ToLower(enable) == "true")
-			CL_EnableFpsCounter(true);
-		else if (Com_ToLower(enable) == "false")
-			CL_EnableFpsCounter(false);
-	}
 }
 
 void CL_Frame() {
