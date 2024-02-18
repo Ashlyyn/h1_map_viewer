@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.19)
 project(h1_map_viewer)
 set(CMAKE_CXX_STANDARD 23)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set(GCC true)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	set(CLANG true)
+endif()
+
 include("$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 
 find_package(Freetype REQUIRED)
@@ -52,4 +58,6 @@ endif()
 
 if(MSVC)
 	target_compile_options(h1_map_viewer PRIVATE "/permissive-" "/Zc:preprocessor" "/Zc:__cplusplus" "/Zc:__STDC__" "/W4" "/wd4005")
+elseif(CLANG OR GCC)
+	target_compile_options(h1_map_viewer PRIVATE "-Wall")
 endif()
