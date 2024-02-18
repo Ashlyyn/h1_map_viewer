@@ -61,9 +61,7 @@ std::string_view Cmd_Argv(int i) {
 bool Cmd_TakeInput(std::string_view input) {	
 	cmd_args.args.clear();
 
-	Com_Split(input, cmd_args.args);
-	
-	return true;
+	return Com_Split(input, cmd_args.args);
 }
 
 void Cmd_Shutdown() {

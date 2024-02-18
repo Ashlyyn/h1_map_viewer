@@ -7,6 +7,7 @@
 #include "devcon.hpp"
 #include "cmd_commands.hpp"
 #include "dvar.hpp"
+#include "con_console.hpp"
 
 void Sys_Init();
 bool Sys_HandleEvent();
@@ -54,36 +55,11 @@ bool Com_Frame() {
     R_DrawFrame(s_deltaTime);
 
     if (DevCon_HasText()) {
-        std::string text = DevCon_TakeText();
-        Com_DPrintln("> {}", text);
-        Cmd_TakeInput(text);
+        Con_ProcessInput(DevCon_TakeText());
+    }
 
-        std::function<void(void)> fn;
-        if (Cmd_FindCommand(Cmd_Argv(0), fn)) {
-            fn();
-        } else {
-            dvar_t* d = Dvar_Find(std::string(Cmd_Argv(0)));
-            if (d != nullptr) {
-                std::deque<std::string> v;
-
-                if (Cmd_Argc() == 1) {
-                    Com_Println(CON_DEST_OUT, "{}", Dvar_GetString(*d));
-                } else {
-                    v.push_back(std::string(Cmd_Argv(1)));
-
-                    if (Dvar_IsVec2(*d) || Dvar_IsVec3(*d) || Dvar_IsVec4(*d))
-                        v.push_back(std::string(Cmd_Argv(2)));
-
-                    if (Dvar_IsVec3(*d) || Dvar_IsVec4(*d))
-                        v.push_back(std::string(Cmd_Argv(3)));
-
-                    if (Dvar_IsVec4(*d))
-                        v.push_back(std::string(Cmd_Argv(4)));
-
-                    Dvar_SetFromString(*d, DVAR_FLAG_NONE, v);
-                }
-            }
-        }
+    if(DevGui_HasText()) {
+        Con_ProcessInput(DevCon_TakeText());
     }
 
 	return true;

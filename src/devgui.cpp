@@ -12,6 +12,10 @@ void DevGui_Init() {
 	);
 }
 
+bool DevGui_HasText() {
+	return false;
+}
+
 void DevGui_Frame() {
 	if (CL_KeyFocus() != KF_DEVGUI) {
 		R_ActivateTextDraw(s_focusDrawId, false);
