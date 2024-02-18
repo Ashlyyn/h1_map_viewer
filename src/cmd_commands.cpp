@@ -46,7 +46,7 @@ void Cmd_ClearCommands() {
 }
 
 int Cmd_Argc() {
-	return cmd_args.args.size();
+	return (int)cmd_args.args.size();
 }
 
 std::string_view Cmd_Argv(int i) {

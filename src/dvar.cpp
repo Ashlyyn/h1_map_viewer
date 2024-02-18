@@ -17,8 +17,8 @@ enum DvarType {
 };
 
 union DvarDomain {
-	struct { int   imin, imax; };
-	struct { float fmin, fmax; };
+	struct { int   min, max; } i;
+	struct { float min, max; } f;
 };
 
 union DvarValue {
@@ -40,8 +40,8 @@ struct dvar_t {
 
 	inline dvar_t() {
 		type = DVAR_TYPE_NONE;
-		domain.imin = 0;
-		domain.imax = 0;
+		domain.i.min = 0;
+		domain.i.max = 0;
 		value.b = false;
 		flags = DVAR_FLAG_NONE;
 		e = std::vector<std::string>();
@@ -59,8 +59,8 @@ struct dvar_t {
 	) {
 		type = DVAR_TYPE_INT;
 		this->flags = flags;
-		domain.imin = min;
-		domain.imax = max;
+		domain.i.min = min;
+		domain.i.max = max;
 		e.push_back(Com_Format("{}", value));
 
 		Dvar_SetInt(*this, value);
@@ -70,8 +70,8 @@ struct dvar_t {
 		dvarFlags_t flags, float value, float min = FLT_MIN, float max = FLT_MAX
 	) {
 		type = DVAR_TYPE_FLOAT;
-		domain.fmin = min;
-		domain.fmax = max;
+		domain.f.min = min;
+		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
 
@@ -101,8 +101,8 @@ struct dvar_t {
 		float min = FLT_MIN, float max = FLT_MAX
 	) {
 		type = DVAR_TYPE_VEC2;
-		domain.fmin = min;
-		domain.fmax = max;
+		domain.f.min = min;
+		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
 
@@ -114,8 +114,8 @@ struct dvar_t {
 		float min = FLT_MIN, float max = FLT_MAX
 	) {
 		type = DVAR_TYPE_VEC3;
-		domain.fmin = min;
-		domain.fmax = max;
+		domain.f.min = min;
+		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
 
@@ -127,8 +127,8 @@ struct dvar_t {
 		float min = FLT_MIN, float max = FLT_MAX
 	) {
 		type = DVAR_TYPE_VEC4;
-		domain.fmin = min;
-		domain.fmax = max;
+		domain.f.min = min;
+		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
 
@@ -234,7 +234,7 @@ void Dvar_SetBool(INOUT dvar_t& d, bool b) {
 
 void Dvar_SetInt(INOUT dvar_t& d, int i) {
 	if (d.type == DVAR_TYPE_INT &&
-		(i <= d.domain.imax && i >= d.domain.imax)
+		(i <= d.domain.i.max && i >= d.domain.i.max)
 	) {
 		d.value.i = i;
 		d.e[0] = Com_Format("{}", i);
@@ -243,7 +243,7 @@ void Dvar_SetInt(INOUT dvar_t& d, int i) {
 
 void Dvar_SetFloat(INOUT dvar_t& d, float f) {
 	if (d.type == DVAR_TYPE_FLOAT &&
-		(f <= d.domain.fmax && f >= d.domain.fmin)
+		(f <= d.domain.f.max && f >= d.domain.f.min)
 	) {
 		d.value.f = f;
 		d.e[0] = Com_Format("{}", f);
@@ -259,8 +259,8 @@ void Dvar_SetString(INOUT dvar_t& d, const std::string& s) {
 
 void Dvar_SetVec2(INOUT dvar_t& d, const glm::vec2& v) {
 	if (d.type == DVAR_TYPE_VEC2 &&
-		(v.x <= d.domain.fmax && v.x >= d.domain.fmin) &&
-		(v.y <= d.domain.fmax && v.y >= d.domain.fmin)
+		(v.x <= d.domain.f.max && v.x >= d.domain.f.min) &&
+		(v.y <= d.domain.f.max && v.y >= d.domain.f.min)
 	) {
 		d.value.v2 = v;
 		d.e[0] = Com_Format("{}", v);
@@ -269,9 +269,9 @@ void Dvar_SetVec2(INOUT dvar_t& d, const glm::vec2& v) {
 
 void Dvar_SetVec3(INOUT dvar_t& d, const glm::vec3& v) {
 	if (d.type == DVAR_TYPE_VEC3 &&
-		(v.x <= d.domain.fmax && v.x >= d.domain.fmin) &&
-		(v.y <= d.domain.fmax && v.y >= d.domain.fmin) &&
-		(v.z <= d.domain.fmax && v.z >= d.domain.fmin)
+		(v.x <= d.domain.f.max && v.x >= d.domain.f.min) &&
+		(v.y <= d.domain.f.max && v.y >= d.domain.f.min) &&
+		(v.z <= d.domain.f.max && v.z >= d.domain.f.min)
 	) {
 		d.value.v3 = v;
 		d.e[0] = Com_Format("{}", v);
@@ -280,10 +280,10 @@ void Dvar_SetVec3(INOUT dvar_t& d, const glm::vec3& v) {
 
 void Dvar_SetVec4(INOUT dvar_t& d, const glm::vec4& v) {
 	if (d.type == DVAR_TYPE_VEC4 &&
-		(v.x <= d.domain.fmax && v.x >= d.domain.fmin) &&
-		(v.y <= d.domain.fmax && v.y >= d.domain.fmin) &&
-		(v.z <= d.domain.fmax && v.z >= d.domain.fmin) &&
-		(v.w <= d.domain.fmax && v.w >= d.domain.fmin)
+		(v.x <= d.domain.f.max && v.x >= d.domain.f.min) &&
+		(v.y <= d.domain.f.max && v.y >= d.domain.f.min) &&
+		(v.z <= d.domain.f.max && v.z >= d.domain.f.min) &&
+		(v.w <= d.domain.f.max && v.w >= d.domain.f.min)
 	) {
 		d.value.v4 = v;
 		d.e[0] = Com_Format("{}", v);
@@ -675,8 +675,8 @@ bool Dvar_SetFromString(
 	if (v.size() >= 4 && Com_Parse({ v[0], v[1], v[2], v[3] }, v4)) {
 		if (dvar.type == DVAR_TYPE_NONE) {
 			dvar.type = DVAR_TYPE_VEC4;
-			dvar.domain.fmin = FLT_MIN;
-			dvar.domain.fmax = FLT_MAX;
+			dvar.domain.f.min = FLT_MIN;
+			dvar.domain.f.max = FLT_MAX;
 			Dvar_SetVec4(dvar, v4);
 			return true;
 		} else if (dvar.type == DVAR_TYPE_VEC4) {
@@ -691,8 +691,8 @@ bool Dvar_SetFromString(
 	if (v.size() >= 3 && Com_Parse({ v[0], v[1], v[2] }, v3)) {
 		if (dvar.type == DVAR_TYPE_NONE) {
 			dvar.type = DVAR_TYPE_VEC3;
-			dvar.domain.fmin = FLT_MIN;
-			dvar.domain.fmax = FLT_MAX;
+			dvar.domain.f.min = FLT_MIN;
+			dvar.domain.f.max = FLT_MAX;
 			Dvar_SetVec3(dvar, v3);
 			return true;
 		} else if (dvar.type == DVAR_TYPE_VEC3) {
@@ -707,8 +707,8 @@ bool Dvar_SetFromString(
 	if (v.size() >= 2 && Com_Parse({ v[0], v[1] }, v2)) {
 		if (dvar.type == DVAR_TYPE_NONE) {
 			dvar.type = DVAR_TYPE_VEC2;
-			dvar.domain.fmin = FLT_MIN;
-			dvar.domain.fmax = FLT_MAX;
+			dvar.domain.f.min = FLT_MIN;
+			dvar.domain.f.max = FLT_MAX;
 			Dvar_SetVec2(dvar, v2);
 			return true;
 		} else if (dvar.type == DVAR_TYPE_VEC2) {
@@ -739,8 +739,8 @@ bool Dvar_SetFromString(
 	if (v.size() >= 1 && Com_Parse(v[0], i)) {
 		if (dvar.type == DVAR_TYPE_NONE) {
 			dvar.type = DVAR_TYPE_INT;
-			dvar.domain.imin = INT_MIN;
-			dvar.domain.imax = INT_MAX;
+			dvar.domain.i.min = INT_MIN;
+			dvar.domain.i.max = INT_MAX;
 			Dvar_SetInt(dvar, i);
 			return true;
 		} else if (dvar.type == DVAR_TYPE_INT) {
@@ -755,8 +755,8 @@ bool Dvar_SetFromString(
 	if (v.size() >= 1 && Com_Parse(v[0], f)) {
 		if (dvar.type == DVAR_TYPE_NONE) {
 			dvar.type = DVAR_TYPE_FLOAT;
-			dvar.domain.fmin = FLT_MIN;
-			dvar.domain.fmax = FLT_MAX;
+			dvar.domain.f.min = FLT_MIN;
+			dvar.domain.f.max = FLT_MAX;
 			Dvar_SetFloat(dvar, f);
 			return true;
 		}

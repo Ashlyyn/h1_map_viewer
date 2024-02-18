@@ -63,12 +63,12 @@ NO_DISCARD bool R_CreateFont(
         GL_STATIC_DRAW
     );
     GL_CALL(glVertexAttribPointer,
-        0, 2, GL_FLOAT, GL_FALSE,
-        sizeof(GfxSubTexDef), (void*)offsetof(GfxSubTexDef, x)
+        0, 2, GL_FLOAT, (GLboolean)GL_FALSE,
+        (GLsizei)sizeof(GfxSubTexDef), (void*)offsetof(GfxSubTexDef, x)
     );
     GL_CALL(glVertexAttribPointer,
-        1, 2, GL_FLOAT, GL_FALSE,
-        sizeof(GfxSubTexDef), (void*)offsetof(GfxSubTexDef, u)
+        1, 2, GL_FLOAT, (GLboolean)GL_FALSE,
+        (GLsizei)sizeof(GfxSubTexDef), (void*)offsetof(GfxSubTexDef, u)
     );
     GL_CALL(glEnableVertexAttribArray, 0);
     GL_CALL(glEnableVertexAttribArray, 1);
@@ -159,8 +159,8 @@ void R_DrawText(
     float           last_w = 0, last_h = 0;
     const GfxGlyph* last_g = nullptr;
 
-    int i = right ? text.size() - 1 : 0;
-    const int end = right ? -1 : text.size();
+    int i = right ? (int)text.size() - 1 : 0;
+    const int end = right ? -1 : (int)text.size();
 
     while (i != end) {
         char c = text.at(i);
@@ -299,7 +299,7 @@ bool R_GetTextDraw(size_t id, OUT GfxTextDraw*& draw) {
 
 
 bool R_FindFreeTextDraw(OUT size_t& index, OUT GfxTextDraw*& draw) {
-    index = -1;
+    index = (size_t)-1;
     draw = nullptr;
 
     for (int i = 0; i < r_textDraws.size(); i++) {

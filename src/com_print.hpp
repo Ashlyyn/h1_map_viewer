@@ -42,7 +42,7 @@ std::string inline Com_Format(std::string_view fmt, Args&&... args) {
 std::string inline Com_ToLower(std::string_view sv) {
     std::string s;
     for (auto c : sv)
-        s.push_back(tolower(c));
+        s.push_back((char)tolower((int)c));
     return s;
 }
 

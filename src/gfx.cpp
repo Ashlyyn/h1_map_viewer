@@ -6,9 +6,6 @@
 #include <cstdio>
 #include <cassert>
 
-#if _WIN32
-#include <Windows.h> // for APIENTRY def
-#endif // _WIN32
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
@@ -30,7 +27,7 @@ extern void R_ClearTextDraws();
 
 void GLAPIENTRY R_GlDebugOutput(
     GLenum source, GLenum type, unsigned int id, GLenum severity,
-    GLsizei length, const char* message, const void* userParam
+    GLsizei /*unused*/, const char* message, const void* /*unused*/
 ) {
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
@@ -45,7 +42,7 @@ void GLAPIENTRY R_GlDebugOutput(
 }
 
 static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim);
-static void R_DrawFrameInternal(uint64_t deltaTime);
+static void R_DrawFrameInternal();
 
 constexpr float NEAR_PLANE_DEFAULT = 0.1f;
 constexpr float FAR_PLANE_DEFAULT  = 100.0f;
@@ -74,7 +71,7 @@ void R_Init() {
     GL_CALL(glEnable, GL_DEBUG_OUTPUT);
     GL_CALL(glEnable, GL_DEBUG_OUTPUT_SYNCHRONOUS);
     GL_CALL(glDebugMessageCallback, R_GlDebugOutput, nullptr);
-    GL_CALL(glDebugMessageControl,  GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    GL_CALL(glDebugMessageControl,  GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, (GLboolean)GL_TRUE);
 #endif // _DEBUG
 
     GL_CALL(glClearColor, 0.2f, 0.3f, 0.3f, 1.0f);
@@ -138,10 +135,10 @@ static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
     R_SetUniform(cubePrim.prog.program, "uContainerTex", 0);
 }
 
-void R_DrawFrame(uint64_t deltaTime) {
+void R_DrawFrame() {
     RB_BeginFrame();
 
-    R_DrawFrameInternal(deltaTime);
+    R_DrawFrameInternal();
 
     RB_EndFrame();
 }
@@ -229,7 +226,7 @@ void R_DrawCube(const glm::vec3& pos, float angle, texture_t tex) {
     glDisable(GL_DEPTH_TEST);
 }
 
-static void R_DrawFrameInternal(uint64_t deltaTime) {
+static void R_DrawFrameInternal() {
     static const std::array<glm::vec3, 10> cubePositions = {
         glm::vec3(0.0f,  0.0f,  0.0f),
         glm::vec3(2.0f,  5.0f, -15.0f),

@@ -113,7 +113,7 @@ bool Sys_CreateThread(thread_t thread, const std::string& name, int(*f)(void*)) 
     return true;
 }
 
-void Sys_DestroyThread(thread_t thread) {
+void Sys_DestroyThread(thread_t /*thread*/) {
     
 }
 

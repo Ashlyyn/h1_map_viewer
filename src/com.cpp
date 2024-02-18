@@ -55,7 +55,7 @@ bool Com_Frame() {
     CG_Frame(s_deltaTime);
     CL_Frame();
     DevGui_Frame();
-    R_DrawFrame(s_deltaTime);
+    R_DrawFrame();
 
     if (DevCon_HasText())
         Con_ProcessInput(DevCon_TakeText());

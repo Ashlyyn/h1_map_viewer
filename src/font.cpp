@@ -21,7 +21,7 @@ bool Font_Load(
 	}
 
 	FT_Face face;
-	if (FT_New_Memory_Face(s_ft, (FT_Byte*)font_buf.data(), font_buf.size(), 0, &face)) {
+	if (FT_New_Memory_Face(s_ft, (FT_Byte*)font_buf.data(), (FT_Long)font_buf.size(), 0, &face)) {
 		Com_Println(CON_DEST_ERR, "Failed to create font '{}'.", font_name);
 		return false;
 	}

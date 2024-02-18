@@ -28,7 +28,7 @@ NO_DISCARD std::vector<std::byte> FS_ReadFile(std::filesystem::path path) {
 	v.resize(len);
 
 	size_t c = SDL_RWread(ops, v.data(), len);
-	if (c < len)
+	if ((Sint64)c < len)
 		Com_Println(
 			CON_DEST_ERR, "Truncated read of file '{}' (expected {} bytes, got {}).",
 			path.string(), len, c
@@ -53,7 +53,7 @@ NO_DISCARD std::string FS_ReadFileText(std::filesystem::path path) {
 	s.resize(len);
 
 	size_t c = SDL_RWread(ops, s.data(), len);
-	if (c < len)
+	if ((Sint64)c < len)
 		Com_Println(
 			CON_DEST_ERR, "Truncated read of file '{}' (expected {} bytes, got {}).",
 			path.string(), len, c

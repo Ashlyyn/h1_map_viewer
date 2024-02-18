@@ -14,7 +14,7 @@ extern int vid_width, vid_height;
 constexpr size_t MAX_LOCAL_CLIENTS = 1;
 
 union MouseButtons {
-	struct { bool ml, mm, mr, m4, m5; };
+	struct { bool ml, mm, mr, m4, m5; } m;
 	bool array[5];
 };
 

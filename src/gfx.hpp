@@ -21,7 +21,7 @@ NO_DISCARD bool R_CreateShaderProgram(
 	OPTIONAL_OUT std::string* log, OUT GfxShaderProgram& prog
 );
 
-void R_DrawFrame(uint64_t deltaTime);
+void R_DrawFrame();
 void R_WindowResized();
 
 NO_DISCARD bool R_CreateImage(
