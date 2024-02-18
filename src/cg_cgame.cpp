@@ -1,9 +1,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-//#include "com_print.hpp"
 #include "cg_cgame.hpp"
 #include "input.hpp"
+#include "cl.hpp"
 
 struct CGameClient {
 	GfxCamera camera;
@@ -95,6 +95,9 @@ void CG_Look(float x, float y) {
 }
 
 void CG_Frame(uint64_t deltaTime) {
+	if (CL_KeyFocus() != KF_GAME)
+		return;
+
 	float vel = 2.5f * ((float)deltaTime / 1000.0f);
 	if (IN_Key_IsDown(SDLK_LSHIFT))
 		vel *= 2;

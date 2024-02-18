@@ -7,7 +7,7 @@
 #include <cassert>
 
 #if _WIN32
-#include <Windows.h>
+#include <Windows.h> // for APIENTRY def
 #endif // _WIN32
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
@@ -44,13 +44,13 @@ void APIENTRY R_GlDebugOutput(
     );
 }
 
-//static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim);
+static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim);
 static void R_DrawFrameInternal(uint64_t deltaTime);
 
 constexpr float NEAR_PLANE_DEFAULT = 0.1f;
 constexpr float FAR_PLANE_DEFAULT  = 100.0f;
 
-//GfxCubePrim r_cubePrim;
+GfxCubePrim r_cubePrim;
 extern GfxFont r_defaultFont;
 glm::mat4 r_orthoProjection;
 
@@ -89,41 +89,22 @@ void R_Init() {
     
     R_ClearTextDraws();
     R_AddTextDraw(nullptr, "This is a test.\nCan we wrap?", 0.1f, 0.1f, 1.0f, 1.0f, glm::vec3(0.77, 0.77, 0.2), true, false, r_testDrawId);
-    //R_InitCubePrim(r_cubePrim);
+    R_InitCubePrim(r_cubePrim);
      
     //glEnable(GL_POINT_SMOOTH);
     //glPointSize(4);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 }
 
-/*
 static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
-    std::string vertSource = FS_ReadFileText("vs.glsl");
+    std::string vertSource = DB_LoadShader("vs.glsl");
     Com_DPrintln(vertSource);
-
-    std::string errorLog;
-
-    if (!R_CompileShader(
-        vertSource, GL_VERTEX_SHADER, &errorLog, cubePrim.prog.vertex_shader
-    )) {
-        Com_Error(errorLog);
-    }
-
-    std::string fragSource = FS_ReadFileText("fs.glsl");
+    std::string fragSource = DB_LoadShader("fs.glsl");
     Com_DPrintln(fragSource);
 
-    if (!R_CompileShader(
-        fragSource, GL_FRAGMENT_SHADER, &errorLog, cubePrim.prog.fragment_shader
-    )) {
+    std::string errorLog;
+    if (!R_CreateShaderProgram(vertSource, fragSource, &errorLog, r_cubePrim.prog))
         Com_Errorln(errorLog);
-    }
-
-    if (!R_LinkShaders(
-        cubePrim.prog.vertex_shader, cubePrim.prog.fragment_shader, 
-        &errorLog, cubePrim.prog.program
-    )) {
-        Com_Errorln(errorLog);
-    }
 
     glGenVertexArrays(1, &cubePrim.vao);
     glBindVertexArray(cubePrim.vao);
@@ -136,7 +117,7 @@ static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
     );
 
     glVertexAttribPointer(
-        0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GfxCubePrim::vertices), (void*)0
+        0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(*GfxCubePrim::vertices), (void*)0
     );
     glEnableVertexAttribArray(0);
 
@@ -154,9 +135,8 @@ static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
             glm::radians(74.0f), (float)vid_height / (float)vid_width, 0.1f, 100.0f
         )
     );
-    R_SetUniform(cubePrim.prog.program, "uContainerTex", 0u);
+    R_SetUniform(cubePrim.prog.program, "uContainerTex", 0);
 }
-*/
 
 void R_DrawFrame(uint64_t deltaTime) {
     RB_BeginFrame();
@@ -181,6 +161,7 @@ NO_DISCARD bool R_CreateImage(
     if(height)
         *height = 0;
 
+    GL_CALL(glActiveTexture, GL_TEXTURE0);
     GL_CALL(glGenTextures,   1, &tex);
     GL_CALL(glBindTexture,   GL_TEXTURE_2D, tex);
 
@@ -228,11 +209,12 @@ NO_DISCARD bool R_CreateImage(
     return true;
 }
 
-/*
 void R_DrawCube(const glm::vec3& pos, float angle, texture_t tex) {
+    glEnable(GL_DEPTH_TEST);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
     glBindVertexArray(r_cubePrim.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, r_cubePrim.vbo);
     glUseProgram(r_cubePrim.prog.program);
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
@@ -241,13 +223,13 @@ void R_DrawCube(const glm::vec3& pos, float angle, texture_t tex) {
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glUseProgram(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_DEPTH_TEST);
 }
-*/
 
 static void R_DrawFrameInternal(uint64_t deltaTime) {
-    /*
     static const std::array<glm::vec3, 10> cubePositions = {
         glm::vec3(0.0f,  0.0f,  0.0f),
         glm::vec3(2.0f,  5.0f, -15.0f),
@@ -260,19 +242,9 @@ static void R_DrawFrameInternal(uint64_t deltaTime) {
         glm::vec3(1.5f,  0.2f, -1.5f),
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
-    */
 
     GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /*
-    glm::vec3 pos = CG_Camera().pos;
-    glm::vec3 center = pos + CG_Camera().front;
-    glm::vec3 up = CG_Camera().up;
-    glm::mat4 view = glm::lookAt(pos, center, up);
-    R_SetUniform(r_cubePrim.prog.program, "uView", view);
-    */
-
-    R_DrawTextDraws();
     /*
     R_DrawText(
         NULL, "Testing 123...", 
@@ -281,11 +253,19 @@ static void R_DrawFrameInternal(uint64_t deltaTime) {
     );
     */
 
-    /*
+    GL_CALL(glUseProgram, r_cubePrim.prog.program);
+    glm::vec3 pos = CG_Camera().pos;
+    glm::vec3 center = pos + CG_Camera().front;
+    glm::vec3 up = CG_Camera().up;
+    glm::mat4 view = glm::lookAt(pos, center, up);
+    R_SetUniform(r_cubePrim.prog.program, "uView", view);
+
     for (int i = 0; i < cubePositions.size(); i++) {
         R_DrawCube(cubePositions[i], 20.0f * (float)i, r_cubePrim.tex);
     }
-    */
+    GL_CALL(glUseProgram, 0);
+
+    R_DrawTextDraws();
 }
 
 void R_Shutdown() {

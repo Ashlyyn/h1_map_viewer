@@ -42,7 +42,35 @@ struct GfxShaderProgram {
 	shader_program_t  program;
 	vertex_shader_t   vertex_shader;
 	fragment_shader_t fragment_shader;
+    
+    GfxShaderProgram() {
+        program = 0;
+        vertex_shader = 0;
+        fragment_shader = 0;
+    }
 
+    GfxShaderProgram(const GfxShaderProgram&) = delete;
+    GfxShaderProgram(GfxShaderProgram&& other) noexcept {
+        program = other.program;
+        vertex_shader = other.vertex_shader;
+        fragment_shader = other.fragment_shader;
+        other.program = 0;
+        other.vertex_shader = 0;
+        other.fragment_shader = 0;
+    }
+
+    GfxShaderProgram& operator=(const GfxShaderProgram&) = delete;
+    GfxShaderProgram& operator=(GfxShaderProgram&& other) noexcept {
+        program = other.program;
+        vertex_shader = other.vertex_shader;
+        fragment_shader = other.fragment_shader;
+
+        other.program = 0;
+        other.vertex_shader = 0;
+        other.fragment_shader = 0;
+        return *this;
+    }
+ 
     ~GfxShaderProgram() {
         glDeleteShader(fragment_shader);
         glDeleteShader(vertex_shader);
@@ -64,6 +92,41 @@ struct GfxFont {
     vao_t vao;
     vbo_t vbo;
     texture_t tex;
+
+    void Take(GfxFont&& other) {
+        glyphs = other.glyphs;
+        atlas_width = other.atlas_width;
+        atlas_height = other.atlas_height;
+        prog = std::move(other.prog);
+        vao = other.vao;
+        vbo = other.vbo;
+        tex = other.tex;
+
+        other.atlas_height = 0;
+        other.atlas_width = 0;
+        other.vao = 0;
+        other.vbo = 0;
+        other.tex = 0;
+    }
+
+    GfxFont() {
+        atlas_width = 0;
+        atlas_height = 0;
+        vao = 0;
+        vbo = 0;
+        tex = 0;
+    }
+
+    GfxFont(const GfxFont&) = delete;
+    GfxFont(GfxFont&& other) {
+        Take(std::move(other));
+    }
+
+    GfxFont& operator=(const GfxFont&) = delete;
+    GfxFont& operator=(GfxFont&& other) {
+        Take(std::move(other));
+        return *this;
+    }
 
     inline bool AddGlyph(char c, const GfxGlyph& g) {
         if (c < 32 || c > 127)

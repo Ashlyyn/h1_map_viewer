@@ -301,7 +301,11 @@ bool Dvar_Exists(const std::string& name) {
 }
 
 dvar_t* Dvar_Find(const std::string& name) {
-	return &s_dvars.find(name)->second;
+	auto d = s_dvars.find(name);
+	if (d == s_dvars.cend())
+		return nullptr;
+
+	return &d->second;
 }
 
 bool Dvar_RegisterNewBool(

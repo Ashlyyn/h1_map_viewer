@@ -86,8 +86,12 @@ NO_DISCARD bool R_CreateFont(
     GL_CALL(glGetIntegerv, GL_UNPACK_ALIGNMENT, &unpackAlign);
     GL_CALL(glPixelStorei, GL_UNPACK_ALIGNMENT, 1);
 
-    GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL_CALL(glTexParameteri, 
+        GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE
+    );
+    GL_CALL(glTexParameteri, 
+        GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE
+    );
     GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -97,14 +101,14 @@ NO_DISCARD bool R_CreateFont(
             continue;
 
         GfxGlyph gg;
-        gg.width = g.width;
-        gg.height = g.height;
+        gg.width     = g.width;
+        gg.height    = g.height;
         gg.advance_x = g.advance_x >> 6;
         gg.advance_y = 0;
-        gg.left = g.left;
-        gg.top = g.top;
-        gg.atlas_x = (float)x / (float)f.atlas_width;
-        gg.atlas_y = 0;
+        gg.left      = g.left;
+        gg.top       = g.top;
+        gg.atlas_x   = (float)x / (float)f.atlas_width;
+        gg.atlas_y   = 0;
         f.AddGlyph(g.c, gg);
 
         if (g.pixels.size() > 0)
@@ -141,10 +145,9 @@ void R_DrawText(
 
     float firstX = x;
 
-    GL_CALL(glEnable, GL_BLEND);
-
-    GL_CALL(glBlendFunc, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CALL(glUseProgram, font->prog.program);
+    GL_CALL(glEnable, GL_BLEND);
+    GL_CALL(glBlendFunc, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CALL(glBindVertexArray, font->vao);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, font->vbo);
     GL_CALL(glActiveTexture, GL_TEXTURE0);
@@ -183,9 +186,11 @@ void R_DrawText(
         else
             font->GetGlyph(c, g);
 
+        // If the glyph couldn't be retrieved, use '#' as a placeholder.
         if (g == nullptr)
             font->GetGlyph('#', g);
 
+        // If '#' couldn't be retrieved either, just move on to the next char.
         if (g == nullptr) {
             right ? i-- : i++;
             continue;
@@ -199,8 +204,10 @@ void R_DrawText(
 
         // Scale the width and height and update the last ones, or reuse the 
         // last ones if the same glyph is being rendered.
-        float w = c == last_c ? last_w : g->width  * xscale * (VID_WIDTH_DEFAULT  / (float)vid_width);
-        float h = c == last_c ? last_h : g->height * yscale * (VID_HEIGHT_DEFAULT / (float)vid_height);
+        float w = c == last_c ? last_w 
+            : g->width  * xscale * (VID_WIDTH_DEFAULT  / (float)vid_width);
+        float h = c == last_c ? last_h 
+            : g->height * yscale * (VID_HEIGHT_DEFAULT / (float)vid_height);
 
         last_w = w;
         last_h = h;
@@ -251,6 +258,10 @@ void R_DrawText(
         right ? i-- : i++;
     }
 
+    GL_CALL(glBindTexture, GL_TEXTURE_2D, 0);
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
+    GL_CALL(glBindVertexArray, 0);
+    GL_CALL(glUseProgram, 0);
     GL_CALL(glDisable, GL_BLEND);
 }
 
@@ -270,7 +281,7 @@ bool R_DrawText(
     R_DrawText(&ff, text, x, y, xscale, yscale, color, right);
 
     if (f != nullptr)
-        *f = ff;
+        *f = std::move(ff);
 
     return true;
 }
@@ -361,7 +372,11 @@ void R_ClearTextDraws() {
 }
 
 void R_DrawTextDraws() {
-    for (const auto& c : r_textDraws)
-        if (!c.free && c.active)
-            R_DrawText(c.font, c.text, c.x, c.y, c.xscale, c.yscale, c.color, c.right);
+    for (const auto& c : r_textDraws) {
+        if (!c.free && c.active) {
+            R_DrawText(
+                c.font, c.text, c.x, c.y, c.xscale, c.yscale, c.color, c.right
+            );
+        }
+    }
 }
