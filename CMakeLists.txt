@@ -49,3 +49,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
 	target_compile_definitions(h1_map_viewer PRIVATE _DEBUG=0)
 endif()
+
+if(MSVC)
+	target_compile_options(h1_map_viewer PRIVATE "/permissive-" "/Zc:preprocessor" "/Zc:__cplusplus" "/Zc:__STDC__" "/W4" "/wd4005")
+endif()
