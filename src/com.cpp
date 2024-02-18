@@ -63,7 +63,7 @@ bool Com_Frame() {
     if(DevGui_HasText())
         Con_ProcessInput(DevGui_TakeText());
 
-	return true;
+    return true;
 }
 
 uint64_t Com_LastFrameTimeDelta() {

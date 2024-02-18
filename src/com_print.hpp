@@ -201,7 +201,7 @@ bool inline Com_Parse(const std::array<std::string_view, 4>& v, OUT glm::vec4& v
     float z = 0.0f;
     std::string_view zs = std::string_view(v[2]);
     auto rz = std::from_chars(zs.data(), zs.data() + zs.size(), z);
-    if (ry.ec != std::errc()) {
+    if (rz.ec != std::errc()) {
         return false;
     }
 

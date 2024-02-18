@@ -302,7 +302,7 @@ bool R_FindFreeTextDraw(OUT size_t& index, OUT GfxTextDraw*& draw) {
     index = (size_t)-1;
     draw = nullptr;
 
-    for (int i = 0; i < r_textDraws.size(); i++) {
+    for (int i = 0; i < (int)r_textDraws.size(); i++) {
         R_GetTextDraw(i, draw);
         if (draw->free) {
             index = i;

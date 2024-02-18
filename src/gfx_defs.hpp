@@ -140,7 +140,7 @@ struct GfxFont {
         if (c < 32 || c > 127)
             return false;
 
-        glyphs[c - 32] = GfxGlyph{ 0 };
+        glyphs[c - 32] = GfxGlyph{};
         return true;
     }
 

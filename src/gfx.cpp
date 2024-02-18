@@ -257,7 +257,7 @@ static void R_DrawFrameInternal() {
     glm::mat4 view = glm::lookAt(pos, center, up);
     R_SetUniform(r_cubePrim.prog.program, "uView", view);
 
-    for (int i = 0; i < cubePositions.size(); i++) {
+    for (int i = 0; i < (int)cubePositions.size(); i++) {
         R_DrawCube(cubePositions[i], 20.0f * (float)i, r_cubePrim.tex);
     }
     GL_CALL(glUseProgram, 0);
