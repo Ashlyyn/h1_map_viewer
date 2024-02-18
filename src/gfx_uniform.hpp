@@ -209,7 +209,7 @@ void inline R_SetUniform(
     shader_program_t program, const std::string& name,
     const std::array<float, N>& value
 ) {
-    int location = glGetUniformLocation(program, name);
+    int location = glGetUniformLocation(program, name.c_str());
     glUniform1fv(location, N, value.data());
 }
 
@@ -218,7 +218,7 @@ void inline R_SetUniform(
     shader_program_t program, const std::string& name, 
     const std::array<int, N>& value
 ) {
-    int location = glGetUniformLocation(program, name);
+    int location = glGetUniformLocation(program, name.c_str());
     glUniform1iv(location, N, value.data());
 }
 
@@ -227,7 +227,7 @@ void inline R_SetUniform(
     shader_program_t program, const std::string& name, 
     const std::array<unsigned int, N>& value
 ) {
-    int location = glGetUniformLocation(program, name);
+    int location = glGetUniformLocation(program, name.c_str());
     glUniform1uiv(location, N, value.data());
 }
 

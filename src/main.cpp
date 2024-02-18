@@ -7,7 +7,7 @@ int main() {
     Com_Init();
 #if _DEBUG
     Com_DPrintln("Running in debug mode.");
-#endif _DEBUG
+#endif // _DEBUG
 
     while (Com_Frame())
         ;

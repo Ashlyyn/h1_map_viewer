@@ -28,7 +28,7 @@ extern int vid_width, vid_height;
 extern void R_DrawTextDraws();
 extern void R_ClearTextDraws();
 
-void APIENTRY R_GlDebugOutput(
+void GLAPIENTRY R_GlDebugOutput(
     GLenum source, GLenum type, unsigned int id, GLenum severity,
     GLsizei length, const char* message, const void* userParam
 ) {

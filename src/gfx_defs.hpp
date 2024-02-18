@@ -357,8 +357,8 @@ auto inline R_GlCallImpl(
 }
 
 #ifndef GL_CALL
-#define GL_CALL(func, ...)                              \
-    R_GlCallImpl(__LINE__, __FILE__, func, __VA_ARGS__);
+#define GL_CALL(func, ...)                                           \
+    R_GlCallImpl(__LINE__, __FILE__, func __VA_OPT__(,) __VA_ARGS__);
 #endif // GL_CALL
 
 // can't be constexpr since atan() isn't constexpr for some reason
@@ -366,10 +366,10 @@ NO_DISCARD inline float FOV_HORZ_TO_VERTICAL(float fovh, float aspect_inv) {
     return 2.0f * atan(tan(fovh / 2) * aspect_inv);
 }
 
-NO_DISCARD constexpr inline float VID_ASPECT() {
+NO_DISCARD inline float VID_ASPECT() {
     return (float)vid_width / (float)vid_height;
 }
 
-NO_DISCARD constexpr inline float VID_ASPECT_INV() {
+NO_DISCARD inline float VID_ASPECT_INV() {
     return (float)vid_height / (float)vid_width;
 }

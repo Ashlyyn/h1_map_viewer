@@ -1,9 +1,11 @@
 #include <array>
+#include <vector>
 #include <unordered_map>
 #include <string>
 #include <span>
 
 #include <cassert>
+#include <cstring>
 
 #include "input.hpp"
 
