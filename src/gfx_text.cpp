@@ -40,11 +40,11 @@ NO_DISCARD bool R_CreateFont(
         DB_LoadShader("text.vs.glsl"),
         DB_LoadShader("text.fs.glsl"),
         NULL, f.prog)
-        ) {
+    ) {
         return false;
     }
 
-    for (const auto& g : fd.glyphs) {
+    for (const auto& g : fd.Glyphs()) {
         f.atlas_width += g.width + 1;
         f.atlas_height = std::max(f.atlas_height, g.height);
     }
@@ -92,8 +92,7 @@ NO_DISCARD bool R_CreateFont(
     GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int x = 0;
-    for (char c = 32; c < 127; c++) {
-        const auto& g = fd.glyphs[c - 32];
+    for(const auto& g : fd.Glyphs()) {
         if (g.advance_x == 0)
             continue;
 
@@ -106,7 +105,7 @@ NO_DISCARD bool R_CreateFont(
         gg.top = g.top;
         gg.atlas_x = (float)x / (float)f.atlas_width;
         gg.atlas_y = 0;
-        f.glyphs[c - 32] = gg;
+        f.AddGlyph(g.c, gg);
 
         if (g.pixels.size() > 0)
             GL_CALL(glTexSubImage2D,
@@ -140,6 +139,8 @@ void R_DrawText(
     x *= vid_width;
     y *= vid_height;
 
+    float firstX = x;
+
     GL_CALL(glEnable, GL_BLEND);
 
     GL_CALL(glBlendFunc, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -153,7 +154,7 @@ void R_DrawText(
 
     char            last_c = '\0';
     float           last_w = 0, last_h = 0;
-    const GfxGlyph* last_g = NULL;
+    const GfxGlyph* last_g = nullptr;
 
     int i = right ? text.size() - 1 : 0;
     const int end = right ? -1 : text.size();
@@ -165,20 +166,41 @@ void R_DrawText(
         // of the loop.
         assert(c != '\0');
 
-        if (c > 127)
+        if (c == '\n') {
+            y -= font->atlas_height;
+            x = firstX;
+            right ? i-- : i++;
+            continue;
+        }
+
+        if (c < 32 || c > 127)
             c = '#';
 
         // Reuse the last glyph if it's going to be rendered again.
-        const auto& g = c == last_c ? *last_g : font->glyphs[c - 32];
+        const GfxGlyph* g = nullptr;
+        if (c == last_c)
+            g = last_g;
+        else
+            font->GetGlyph(c, g);
+
+        if (g == nullptr)
+            font->GetGlyph('#', g);
+
+        if (g == nullptr) {
+            right ? i-- : i++;
+            continue;
+        }
 
         // Skip rendering a glyph if it has no advance
-        if (g.advance_x == 0)
+        if (g->advance_x == 0) {
+            right ? i-- : i++;
             continue;
+        }
 
         // Scale the width and height and update the last ones, or reuse the 
         // last ones if the same glyph is being rendered.
-        float w = c == last_c ? last_w : g.width * xscale * (VID_WIDTH_DEFAULT / (float)vid_width);
-        float h = c == last_c ? last_h : g.height * yscale * (VID_HEIGHT_DEFAULT / (float)vid_height);
+        float w = c == last_c ? last_w : g->width  * xscale * (VID_WIDTH_DEFAULT  / (float)vid_width);
+        float h = c == last_c ? last_h : g->height * yscale * (VID_HEIGHT_DEFAULT / (float)vid_height);
 
         last_w = w;
         last_h = h;
@@ -186,21 +208,21 @@ void R_DrawText(
         // Glyphs can have no width or height because they have no pixel data
         // but a nonzero advance (i.e., space). Skip rendering on those and
         // just update the cursor position.
-        if (g.width == 0 || g.height == 0) {
+        if (g->width == 0 || g->height == 0) {
             if (right)
-                x -= g.advance_x * xscale;
+                x -= g->advance_x * xscale;
             else
-                x += g.advance_x * xscale;
+                x += g->advance_x * xscale;
             last_c = c;
-            last_g = &g;
+            last_g = g;
             right ? i-- : i++;
             continue;
         }
 
         float xpos =
-            x * (VID_WIDTH_DEFAULT / (float)vid_width) + g.left;
+            x * (VID_WIDTH_DEFAULT / (float)vid_width) + g->left;
         float ypos =
-            y * (VID_HEIGHT_DEFAULT / (float)vid_height) - (g.height - g.top);
+            y * (VID_HEIGHT_DEFAULT / (float)vid_height) - (g->height - g->top);
 
         glm::mat4 model(1.0f);
         model = glm::translate(model, glm::vec3(xpos, ypos, 0.0f));
@@ -211,9 +233,9 @@ void R_DrawText(
         // need to be updated.
         if (c != last_c) {
             glm::vec4 atlasCoord(
-                g.atlas_x, g.atlas_y,
-                (float)g.width / (float)font->atlas_width,
-                (float)g.height / (float)font->atlas_height
+                g->atlas_x, g->atlas_y,
+                (float)g->width  / (float)font->atlas_width,
+                (float)g->height / (float)font->atlas_height
             );
             R_SetUniform(font->prog.program, "uAtlasCoord", atlasCoord);
         }
@@ -221,11 +243,11 @@ void R_DrawText(
         GL_CALL(glDrawArrays, GL_TRIANGLES, 0, 6);
 
         if (right)
-            x -= g.advance_x * xscale;
+            x -= g->advance_x * xscale;
         else
-            x += g.advance_x * xscale;
+            x += g->advance_x * xscale;
         last_c = c;
-        last_g = &g;
+        last_g = g;
         right ? i-- : i++;
     }
 

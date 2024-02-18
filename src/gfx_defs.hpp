@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <span>
 
 #include "GL/glew.h"
 #include <glm/glm.hpp>
@@ -58,18 +59,50 @@ struct GfxGlyph {
 };
 
 struct GfxFont {
-    std::array<GfxGlyph, 95> glyphs;
     int atlas_width, atlas_height;
     GfxShaderProgram prog;
     vao_t vao;
     vbo_t vbo;
     texture_t tex;
 
-    ~GfxFont() {
+    inline bool AddGlyph(char c, const GfxGlyph& g) {
+        if (c < 32 || c > 127)
+            return false;
+
+        glyphs[c - 32] = g;
+        return true;
+    }
+
+    inline bool RemoveGlyph(char c) {
+        if (c < 32 || c > 127)
+            return false;
+
+        glyphs[c - 32] = GfxGlyph{ 0 };
+        return true;
+    }
+
+    inline bool GetGlyph(char c, OUT const GfxGlyph*& g) const {
+        if (c < 32 || c > 127) {
+            g = nullptr;
+            return false;
+        }
+
+        g = &glyphs[c - 32];
+        return true;
+    }
+
+    inline std::span<GfxGlyph> Glyphs() {
+        return std::span(glyphs);
+    }
+
+    inline ~GfxFont() {
         glDeleteTextures(1, &tex);
         glDeleteBuffers(1, &vbo);
         glDeleteBuffers(1, &vao);
     }
+
+private:
+    std::array<GfxGlyph, 95> glyphs;
 };
 
 struct GfxCubePrim {

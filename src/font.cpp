@@ -36,6 +36,7 @@ bool Font_Load(
 			);
 
 		GlyphDef glyph;
+		glyph.c         = c;
 		glyph.width     = face->glyph->bitmap.width;
 		glyph.height    = face->glyph->bitmap.rows;
 		glyph.left      = face->glyph->bitmap_left;
@@ -47,7 +48,7 @@ bool Font_Load(
 			glyph.pixels.data(), face->glyph->bitmap.buffer,
 			glyph.pixels.size() * sizeof(*glyph.pixels.data())
 		);
-		fd.glyphs[c - 32] = glyph;
+		fd.AddGlyph(c, glyph);
 	}
 
 	FT_Done_Face(face);

@@ -88,7 +88,7 @@ void R_Init() {
     assert(R_CreateFont("consola.ttf", 0, 48, r_defaultFont));
     
     R_ClearTextDraws();
-    R_AddTextDraw(nullptr, "This is a test", 0.1f, 0.1f, 1.0f, 1.0f, glm::vec3(0.77, 0.77, 0.2), true, false, r_testDrawId);
+    R_AddTextDraw(nullptr, "This is a test.\nCan we wrap?", 0.1f, 0.1f, 1.0f, 1.0f, glm::vec3(0.77, 0.77, 0.2), true, false, r_testDrawId);
     //R_InitCubePrim(r_cubePrim);
      
     //glEnable(GL_POINT_SMOOTH);
