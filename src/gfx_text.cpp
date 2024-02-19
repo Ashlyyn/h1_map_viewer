@@ -1,16 +1,14 @@
+#include "gfx_text.hpp"
+
 #include <array>
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "gfx_text.hpp"
-#include "com_defs.hpp"
-#include "gfx_defs.hpp"
+#include "cg_cgame.hpp"
+#include "db_files.hpp"
 #include "gfx_shaders.hpp"
 #include "gfx_uniform.hpp"
-#include "gfx_text.hpp"
-#include "db_files.hpp"
 #include "sys.hpp"
-#include "cg_cgame.hpp"
 
 extern int vid_width, vid_height;
 GfxFont r_defaultFont;

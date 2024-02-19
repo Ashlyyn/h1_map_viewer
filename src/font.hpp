@@ -1,9 +1,9 @@
 #pragma once
 
-#include <vector>
 #include <array>
 #include <filesystem>
 #include <span>
+#include <vector>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

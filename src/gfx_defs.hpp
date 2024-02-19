@@ -3,12 +3,12 @@
 #include <memory>
 #include <span>
 
-#include "GL/glew.h"
-#include <glm/glm.hpp>
+#include <GL/glew.h>
 #include <SDL3/SDL.h>
+#include <glm/glm.hpp>
 
-#include "font.hpp"
 #include "com_print.hpp"
+#include "font.hpp"
 
 typedef unsigned int vbo_t;
 typedef unsigned int vao_t;

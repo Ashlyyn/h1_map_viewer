@@ -16,8 +16,8 @@ find_package(glm CONFIG REQUIRED)
 
 add_executable(h1_map_viewer 
 	src/cg_cgame.cpp src/com.cpp src/font.cpp src/fs_files.cpp src/gfx.cpp 
-	src/gfx_backend.cpp  src/input.cpp src/main.cpp src/sys.cpp
- 	src/db_files.cpp src/cmd_commands.cpp src/cl.cpp src/devgui.cpp 
+	src/gfx_backend.cpp  "src/in_input.cpp" src/main.cpp src/sys.cpp
+ 	src/db_files.cpp src/cmd_commands.cpp "src/cl_client.cpp" src/devgui.cpp 
 	src/gfx_text.cpp src/gfx_shaders.cpp src/devcon.cpp src/dvar.cpp 
 	src/con_console.cpp
 )

@@ -1,11 +1,12 @@
-#include <string>
+#include "devcon.hpp"
+
 #include <iostream>
+#include <string>
 
 #include <cstdio>
 
 #include <SDL3/SDL.h>
 
-#include "devcon.hpp"
 #include "com_print.hpp"
 
 std::string devcon_buffer;

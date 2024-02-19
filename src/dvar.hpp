@@ -1,13 +1,12 @@
 #pragma once
 
+#include <deque>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <deque>
 
 #include <glm/glm.hpp>
 
-#include "com_defs.hpp"
 #include "com_print.hpp"
 
 void Dvar_Init();

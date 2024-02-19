@@ -1,22 +1,15 @@
 #include <cstdint>
 
-#include "gfx.hpp"
 #include "cg_cgame.hpp"
-#include "cl.hpp"
-#include "devgui.hpp"
-#include "devcon.hpp"
 #include "cmd_commands.hpp"
-#include "dvar.hpp"
 #include "con_console.hpp"
-#include "input.hpp"
-
-void Sys_Init();
-bool Sys_HandleEvent();
-void R_Init();
-void CG_Init();
-void CG_Frame(uint64_t deltaTime);
-void Font_Init();
-uint64_t Sys_Milliseconds();
+#include "devcon.hpp"
+#include "devgui.hpp"
+#include "dvar.hpp"
+#include "font.hpp"
+#include "gfx.hpp"
+#include "in_input.hpp"
+#include "sys.hpp"
 
 static uint64_t s_lastFrameTime;
 static uint64_t s_deltaTime;

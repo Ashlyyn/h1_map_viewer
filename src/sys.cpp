@@ -1,14 +1,14 @@
+#include "sys.hpp"
+
 #include <cstdio>
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 
-#include "com_defs.hpp"
-#include "gfx.hpp"
-#include "sys.hpp"
-#include "gfx.hpp"
-#include "input.hpp"
+#include "cl_client.hpp"
 #include "devcon.hpp"
+#include "gfx.hpp"
+#include "in_input.hpp"
 
 SDL_Window* g_sdlWindow;
 
@@ -56,19 +56,19 @@ bool Sys_HandleEvent() {
             if (ev.key.keysym.sym == SDLK_ESCAPE)
                 Sys_NormalExit(1);
             else
-                IN_Key_Down(ev.key.keysym.sym);
+                IN_Key_Down(CL_ClientWithKbmFocus(), ev.key.keysym.sym);
             break;
         case SDL_EVENT_KEY_UP:
-            IN_Key_Up(ev.key.keysym.sym);
+            IN_Key_Up(CL_ClientWithKbmFocus(), ev.key.keysym.sym);
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            IN_Mouse_Down(ev.button.button);
+            IN_Mouse_Down(CL_ClientWithKbmFocus(), ev.button.button);
             break;
         case SDL_EVENT_MOUSE_BUTTON_UP:
-            IN_Mouse_Up(ev.button.button);
+            IN_Mouse_Up(CL_ClientWithKbmFocus(), ev.button.button);
             break;
         case SDL_EVENT_MOUSE_MOTION:
-            IN_Mouse_Move(ev.motion.xrel, ev.motion.yrel);
+            IN_Mouse_Move(CL_ClientWithKbmFocus(), ev.motion.xrel, ev.motion.yrel);
             break;
         case SDL_EVENT_WINDOW_RESIZED:
             vid_width = ev.window.data1;

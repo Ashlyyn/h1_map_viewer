@@ -1,6 +1,5 @@
-#include "sys.hpp"
-#include "com_defs.hpp"
 #include "com_print.hpp"
+#include "sys.hpp"
 
 int main() {    
     Sys_Init();

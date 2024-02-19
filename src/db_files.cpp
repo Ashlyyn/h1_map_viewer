@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <map>
 
-#include "com_defs.hpp"
 #include "fs_files.hpp"
 
 enum AssetType {

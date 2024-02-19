@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "com_defs.hpp"
 
            int         DevCon_Thread(void*);

@@ -1,11 +1,10 @@
-#include <vector>
-#include <string_view>
-#include <string>
-
-#include <cstdio>
-#include <cstdlib>
-
 #include <filesystem>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include <cstdlib>
+#include <cstdio>
 
 #include <SDL3/SDL.h>
 

@@ -1,6 +1,7 @@
+#include "con_console.hpp"
+
 #include <functional>
 
-#include "con_console.hpp"
 #include "cmd_commands.hpp"
 #include "dvar.hpp"
 

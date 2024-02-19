@@ -1,8 +1,9 @@
-#include <string_view>
+#include "cmd_commands.hpp"
+
 #include <functional>
+#include <string_view>
 #include <unordered_map>
 
-#include "cmd_commands.hpp"
 #include "com_print.hpp"
 
 std::unordered_map<std::string_view, std::function<void(void)>> s_cmds;

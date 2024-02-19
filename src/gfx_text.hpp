@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string_view>
 #include <string>
+#include <string_view>
 
 #include "com_defs.hpp"
 #include "gfx_defs.hpp"

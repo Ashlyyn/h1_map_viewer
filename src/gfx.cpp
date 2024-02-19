@@ -1,24 +1,18 @@
-#include <array>
-#include <algorithm>
-#include <numeric>
-#include <unordered_map>
+#include "gfx.hpp"
 
-#include <cstdio>
 #include <cassert>
+#include <cstdio>
 
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "com_print.hpp"
-#include "fs_files.hpp"
-#include "gfx.hpp"
-#include "gfx_backend.hpp"
-#include "gfx_uniform.hpp"
-#include "gfx_text.hpp"
 #include "cg_cgame.hpp"
 #include "db_files.hpp"
+#include "gfx_backend.hpp"
+#include "gfx_text.hpp"
+#include "gfx_uniform.hpp"
 #include "sys.hpp"
 
 extern int vid_width, vid_height;
@@ -123,9 +117,7 @@ static void R_UpdateLocalClientView(int localClientNum) {
 
 static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
     std::string vertSource = DB_LoadShader("vs.glsl");
-    Com_DPrintln(vertSource);
     std::string fragSource = DB_LoadShader("fs.glsl");
-    Com_DPrintln(fragSource);
 
     std::string errorLog;
     if (!R_CreateShaderProgram(
@@ -167,6 +159,9 @@ static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
 }
 
 void R_DrawFrame(int localClientNum) {
+    if (!CG_LocalClientIsActive(localClientNum))
+        return;
+
     RB_BeginFrame();
 
     R_DrawFrameInternal(localClientNum);

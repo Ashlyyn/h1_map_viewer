@@ -1,3 +1,5 @@
+#include "gfx_backend.hpp"
+
 #include <cstdio>
 
 #include <GL/glew.h>
@@ -20,13 +22,15 @@ void RB_Init() {
 #endif // _DEBUG
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetSwapInterval(0);
 
     s_glContext = SDL_GL_CreateContext(g_sdlWindow);
     if (s_glContext == nullptr) {
         printf("GL context creation failed: %s\n", SDL_GetError());
         Sys_NormalExit(-1);
     }
+
+    //if (SDL_GL_SetSwapInterval(0) != 0)
+    //    printf("Failed to disable vsync for window: %s\n", SDL_GetError());
 
     GLenum err = glewInit();
     if (err != GLEW_OK) {

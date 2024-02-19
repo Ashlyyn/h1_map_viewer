@@ -1,62 +1,76 @@
+#include "devgui.hpp"
+
 #include <array>
 
-#include "cl.hpp"
-#include "gfx.hpp"
+#include "cl_client.hpp"
 #include "gfx_text.hpp"
-#include "input.hpp"
+#include "in_input.hpp"
 
-std::array<size_t, MAX_LOCAL_CLIENTS> devgui_promptDrawId;
-std::array<std::string, MAX_LOCAL_CLIENTS> devgui_buffer;
+struct dgl_t {
+	size_t promptDrawId;
+	std::string buffer;
+};
+
+std::array<dgl_t, MAX_LOCAL_CLIENTS> s_dgl;
+
+dgl_t& DevGui_GetLocalClientLocals(int localClientNum) {
+	return s_dgl.at(localClientNum);
+}
 
 void DevGui_Init() {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
-		devgui_buffer.at(i) = "> ";
+		dgl_t& dgl = DevGui_GetLocalClientLocals(i);
+		dgl.buffer = "> ";
 
 		assert(R_AddTextDraw(
-			i, nullptr, devgui_buffer.at(i),
+			i, nullptr, dgl.buffer,
 			0.1f, 0.9f, 1.0f, 1.0f, glm::vec3(0.9f, 0.2f, 0.2f),
-			false, false, devgui_promptDrawId.at(i)
+			false, false, dgl.promptDrawId
 		));
 	}
 }
 
 bool DevGui_HasText(int localClientNum) {
-	return devgui_buffer.at(localClientNum).contains('\n');
+	return DevGui_GetLocalClientLocals(localClientNum).buffer.contains('\n');
 }
 
 std::string DevGui_TakeText(int localClientNum) {
-	size_t pos = devgui_buffer.at(localClientNum).find('\n');
+	dgl_t& dgl = DevGui_GetLocalClientLocals(localClientNum);
+
+	size_t pos = dgl.buffer.find('\n');
 	size_t len = pos - 2;
-	std::string input = devgui_buffer.at(localClientNum).substr(2, len);
-	devgui_buffer.at(localClientNum).erase(2, len + 1);
+	std::string input = dgl.buffer.substr(2, len);
+	dgl.buffer.erase(2, len + 1);
 	return input;
 }
 
 void DevGui_Frame() {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		dgl_t& dgl = DevGui_GetLocalClientLocals(i);
 		if (CL_KeyFocus(i) != KF_DEVGUI) {
-			R_ActivateTextDraw(i, devgui_promptDrawId.at(i), false);
-			return;
+			R_ActivateTextDraw(i, dgl.promptDrawId, false);
+			continue;
 		}
 
-		for (auto k : IN_Key_AllPressedOnCurrentFrame()) {
-			char c = IN_Key_Char(k);
+ 		for (auto k : IN_Key_AllPressedOnCurrentFrame(i)) {
+			char c = IN_Key_Char(i, k);
 			if (c != 0 && k != SDLK_BACKQUOTE)
-				devgui_buffer.at(i).push_back(c);
-			else if (k == SDLK_BACKSPACE && devgui_buffer.at(i).length() > 2)
-				devgui_buffer.at(i).pop_back();
+				dgl.buffer.push_back(c);
+			else if (k == SDLK_BACKSPACE && dgl.buffer.length() > 2)
+				dgl.buffer.pop_back();
 			else if (k == SDLK_DELETE)
-				devgui_buffer.at(i) = "> ";
+				dgl.buffer = "> ";
 		}
 
-		R_UpdateTextDraw(i, devgui_promptDrawId.at(i), devgui_buffer.at(i));
-		R_ActivateTextDraw(i, devgui_promptDrawId.at(i), true);
+		R_UpdateTextDraw(i, dgl.promptDrawId, dgl.buffer);
+		R_ActivateTextDraw(i, dgl.promptDrawId, true);
 	}
 }
 
 void DevGui_Shutdown() {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
-		R_RemoveTextDraw(i, devgui_promptDrawId.at(i));
-		devgui_buffer.at(i).clear();
+		dgl_t& dgl = DevGui_GetLocalClientLocals(i);
+		R_RemoveTextDraw(i, dgl.promptDrawId);
+		dgl.buffer.clear();
 	}
 }

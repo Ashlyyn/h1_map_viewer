@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string_view>
-#include <memory>
 #include <filesystem>
+#include <memory>
+#include <string_view>
 
 #include "com_defs.hpp"
 #include "gfx_defs.hpp"
@@ -21,7 +21,7 @@ NO_DISCARD bool R_CreateShaderProgram(
 	OPTIONAL_OUT std::string* log, OUT GfxShaderProgram& prog
 );
 
-void R_DrawFrame();
+void R_DrawFrame(int localClientNum);
 void R_WindowResized();
 
 NO_DISCARD bool R_CreateImage(

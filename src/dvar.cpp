@@ -1,8 +1,9 @@
+#include "dvar.hpp"
+
 #include <unordered_map>
 
-#include "dvar.hpp"
-#include "com_print.hpp"
 #include "cmd_commands.hpp"
+#include "com_print.hpp"
 
 enum DvarType {
 	DVAR_TYPE_NONE,
