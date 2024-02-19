@@ -5,63 +5,91 @@
 #include "input.hpp"
 #include "cl.hpp"
 
-struct CGameClient {
-	GfxCamera camera;
-} cg;
-
-float cg_fov;
-float cg_baseVelocity;
-float cg_sensitivity;
-
 static float s_lastMouseX, s_lastMouseY;
 static bool  s_firstMouse;
 
-void CG_Init() {
-	cg.camera.pos     = glm::vec3( 0.0f,  0.0f,  0.0f );
-	cg.camera.worldUp = glm::vec3( 0.0f,  1.0f,  0.0f );
-	cg.camera.front   = glm::vec3( 0.0f,  0.0f, -1.0f );
-	cg.camera.up      = glm::vec3( 0.0f,  1.0f,  0.0f );
-	cg.camera.pitch   =  0.0f;
-	cg.camera.yaw     = -90.0f;
+static std::array<cg_t, MAX_LOCAL_CLIENTS> s_cg;
 
+void CG_Init() {
 	s_firstMouse = true;
 	s_lastMouseX = IN_Mouse_X();
 	s_lastMouseY = IN_Mouse_Y();
 
-	cg_fov = 120.0f;
-	cg_baseVelocity = 2.5f;
-	cg_sensitivity  = 0.1f;
+	for (auto& cg : s_cg) {
+		cg.camera.pos = glm::vec3(0.0f, 0.0f, 0.0f);
+		cg.camera.worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+		cg.camera.front = glm::vec3(0.0f, 0.0f, -1.0f);
+		cg.camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
+		cg.camera.pitch = 0.0f;
+		cg.camera.yaw = -90.0f;
+
+		cg.viewport.x = 0.0f;
+		cg.viewport.y = 0.0f;
+		cg.viewport.w = 1.0f;
+		cg.viewport.h = 1.0f;
+
+		cg.fov = 120.0f;
+		cg.sensitivity = 0.1f;
+		cg.active = false;
+	}
+
+	s_cg[0].hasKbmFocus = true;
+	s_cg[0].active = true;
 }
 
-void CG_MoveForward(float vel) {
+cg_t& CG_GetLocalClientGlobals(int localClientNum) {
+	assert(localClientNum < MAX_LOCAL_CLIENTS);
+	return s_cg.at(localClientNum);
+}
+
+void CG_ActivateLocalClient(int localClientNum) {
+	CG_GetLocalClientGlobals(localClientNum).active = true;
+}
+
+void CG_DectivateLocalClient(int localClientNum) {
+	CG_GetLocalClientGlobals(localClientNum).active = false;
+}
+
+void CG_GiveKbmFocus(int localClientNum) {
+	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++)
+		CG_GetLocalClientGlobals(i).hasKbmFocus = i == localClientNum; 
+}
+
+void CG_MoveForward(int localClientNum, float vel) {
+	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos += vel * cg.camera.front;
 }
 
-void CG_MoveBackward(float vel) {
+void CG_MoveBackward(int localClientNum, float vel) {
+	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos -= vel * cg.camera.front;
 }
 
-void CG_StrafeLeft(float vel) {
+void CG_StrafeLeft(int localClientNum, float vel) {
+	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos -= glm::normalize(
 		glm::cross(cg.camera.front, cg.camera.up)
 	) * vel;
 }
 
-void CG_StrafeRight(float vel) {
+void CG_StrafeRight(int localClientNum, float vel) {
+	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos += glm::normalize(
 		glm::cross(cg.camera.front, cg.camera.up)
 	) * vel;
 }
 
-void CG_Ascend(float vel) {
+void CG_Ascend(int localClientNum, float vel) {
+	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos += vel * cg.camera.up;
 }
 
-void CG_Descend(float vel) {
+void CG_Descend(int localClientNum, float vel) {
+	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos -= vel * cg.camera.up;
 }
 
-void CG_Look(float x, float y) {
+void CG_Look(int localClientNum, float x, float y) {
 	if (s_firstMouse) {
 		s_lastMouseX = x;
 		s_lastMouseY = y;
@@ -73,8 +101,9 @@ void CG_Look(float x, float y) {
 	s_lastMouseX = x;
 	s_lastMouseY = y;
 
-	xoff *= cg_sensitivity;
-	yoff *= cg_sensitivity;
+	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
+	xoff *= cg.sensitivity;
+	yoff *= cg.sensitivity;
 
 	cg.camera.yaw   -= xoff;
 	cg.camera.pitch += yoff;
@@ -95,39 +124,47 @@ void CG_Look(float x, float y) {
 }
 
 void CG_Frame(uint64_t deltaTime) {
-	if (CL_KeyFocus() != KF_GAME)
-		return;
+	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		if (CL_KeyFocus(i) != KF_GAME)
+			return;
 
-	float vel = 2.5f * ((float)deltaTime / 1000.0f);
-	if (IN_Key_IsDown(SDLK_LSHIFT))
-		vel *= 2;
+		if (IN_Key_WasPressedOnCurrentFrame(SDLK_n)) {
+			CG_ActivateLocalClient(1);
+			CG_GiveKbmFocus(1);
+			CG_DectivateLocalClient(0);
+		}
+		else if (IN_Key_WasPressedOnCurrentFrame(SDLK_m)) {
+			CG_DectivateLocalClient(1);
+			CG_GiveKbmFocus(0);
+			CG_ActivateLocalClient(0);
+		}
 
-	if (IN_Key_IsDown(SDLK_w))
-		CG_MoveForward(vel);
-	if (IN_Key_IsDown(SDLK_s))
-		CG_MoveBackward(vel);
-	if (IN_Key_IsDown(SDLK_a))
-		CG_StrafeLeft(vel);
-	if (IN_Key_IsDown(SDLK_d))
-		CG_StrafeRight(vel);
-	if (IN_Key_IsDown(SDLK_SPACE))
-		CG_Ascend(vel);
-	if (IN_Key_IsDown(SDLK_LCTRL))
-		CG_Descend(vel);
+		float vel = 2.5f * ((float)deltaTime / 1000.0f);
+		if (IN_Key_IsDown(SDLK_LSHIFT))
+			vel *= 2;
 
-	//Com_DPrintln("x={}, y={}", IN_Mouse_X(), IN_Mouse_Y());
-	if (s_lastMouseX != IN_Mouse_X() || s_lastMouseY != IN_Mouse_Y()) {
-		CG_Look(IN_Mouse_X(), IN_Mouse_Y());
+		if (!CG_GetLocalClientGlobals(i).hasKbmFocus)
+			continue;
+
+		if (IN_Key_IsDown(SDLK_w))
+			CG_MoveForward(i, vel);
+		if (IN_Key_IsDown(SDLK_s))
+			CG_MoveBackward(i, vel);
+		if (IN_Key_IsDown(SDLK_a))
+			CG_StrafeLeft(i, vel);
+		if (IN_Key_IsDown(SDLK_d))
+			CG_StrafeRight(i, vel);
+		if (IN_Key_IsDown(SDLK_SPACE))
+			CG_Ascend(i, vel);
+		if (IN_Key_IsDown(SDLK_LCTRL))
+			CG_Descend(i, vel);
+
+		//Com_DPrintln("x={}, y={}", IN_Mouse_X(), IN_Mouse_Y());
+		if (s_lastMouseX != IN_Mouse_X() || s_lastMouseY != IN_Mouse_Y()) {
+			CG_Look(i, IN_Mouse_X(), IN_Mouse_Y());
+		}
+		break;
 	}
-	
-}
-
-GfxCamera& CG_Camera() {
-	return cg.camera;
-}
-
-float CG_Fov() {
-	return cg_fov;
 }
 
 void CG_Shutdown() {

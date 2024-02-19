@@ -13,7 +13,6 @@
 void Sys_Init();
 bool Sys_HandleEvent();
 void R_Init();
-void R_DrawFrame(uint64_t deltaTime);
 void CG_Init();
 void CG_Frame(uint64_t deltaTime);
 void Font_Init();
@@ -33,8 +32,8 @@ bool Com_Init() {
     Cmd_AddCommand("quit", Com_Quit_f);
     Dvar_Init();
     Font_Init();
-    R_Init();
     CG_Init();
+    R_Init();
     CL_Init();
     CL_EnableFpsCounter(true);
     DevGui_Init();
@@ -55,13 +54,19 @@ bool Com_Frame() {
     CG_Frame(s_deltaTime);
     CL_Frame();
     DevGui_Frame();
-    R_DrawFrame();
+    for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+        cg_t& cg = CG_GetLocalClientGlobals(i);
+        if (!cg.active)
+            continue;
 
+        if (DevGui_HasText(i))
+            Con_ProcessInput(DevGui_TakeText(i));
+
+        R_DrawFrame(i);
+    }
+    
     if (DevCon_HasText())
         Con_ProcessInput(DevCon_TakeText());
-
-    if(DevGui_HasText())
-        Con_ProcessInput(DevGui_TakeText());
 
     return true;
 }

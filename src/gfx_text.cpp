@@ -10,9 +10,9 @@
 #include "gfx_text.hpp"
 #include "db_files.hpp"
 #include "sys.hpp"
+#include "cg_cgame.hpp"
 
 extern int vid_width, vid_height;
-extern glm::mat4 r_orthoProjection;
 GfxFont r_defaultFont;
 
 inline static const std::array<GfxSubTexDef, 6> s_subTexDefs = {
@@ -120,7 +120,6 @@ NO_DISCARD bool R_CreateFont(
         x += g.width + 1;
     }
 
-    R_SetUniform(f.prog.program, "uOrthoProjection", r_orthoProjection);
     R_SetUniform(f.prog.program, "uTex", 0);
 
     GL_CALL(glPixelStorei, GL_UNPACK_ALIGNMENT, unpackAlign);
@@ -134,8 +133,9 @@ NO_DISCARD bool R_CreateFont(
 // ============================================================================
 
 void R_DrawText(
-    OPTIONAL_IN const GfxFont* font, std::string_view text, float x, float y,
-    float xscale, float yscale, const glm::vec3& color, bool right
+    int localClientNum, OPTIONAL_IN const GfxFont* font, std::string_view text, 
+    float x, float y, float xscale, float yscale, const glm::vec3& color, 
+    bool right
 ) {
     if (font == nullptr)
         font = &r_defaultFont;
@@ -154,6 +154,12 @@ void R_DrawText(
     GL_CALL(glBindTexture, GL_TEXTURE_2D, font->tex);
 
     R_SetUniform(font->prog.program, "uTextColor", color);
+
+    cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
+
+    R_SetUniform(
+        font->prog.program, "uOrthoProjection", cg.camera.orthoProjection
+    );
 
     char            last_c = '\0';
     float           last_w = 0, last_h = 0;
@@ -204,10 +210,10 @@ void R_DrawText(
 
         // Scale the width and height and update the last ones, or reuse the 
         // last ones if the same glyph is being rendered.
-        float w = c == last_c ? last_w 
-            : g->width  * xscale * (VID_WIDTH_DEFAULT  / (float)vid_width);
-        float h = c == last_c ? last_h 
-            : g->height * yscale * (VID_HEIGHT_DEFAULT / (float)vid_height);
+        float w = c == last_c ? last_w
+            : g->width * xscale;
+        float h = c == last_c ? last_h
+            : g->height * yscale;
 
         last_w = w;
         last_h = h;
@@ -226,10 +232,8 @@ void R_DrawText(
             continue;
         }
 
-        float xpos =
-            x * (VID_WIDTH_DEFAULT / (float)vid_width) + g->left;
-        float ypos =
-            y * (VID_HEIGHT_DEFAULT / (float)vid_height) - (g->height - g->top);
+        float xpos = x + g->left;
+        float ypos = y - (g->height - g->top);
 
         glm::mat4 model(1.0f);
         model = glm::translate(model, glm::vec3(xpos, ypos, 0.0f));
@@ -266,10 +270,9 @@ void R_DrawText(
 }
 
 bool R_DrawText(
-    std::string_view font_name, std::string_view text,
-    int width, int height, float x, float y,
-    float xscale, float yscale, const glm::vec3& color,
-    bool right, OPTIONAL_OUT GfxFont* f
+    int localClientNum, std::string_view font_name, std::string_view text, 
+    int width, int height, float x, float y, float xscale, float yscale, 
+    const glm::vec3& color, bool right, OPTIONAL_OUT GfxFont* f
 ) {
     if (f != nullptr)
         *f = GfxFont{};
@@ -278,7 +281,7 @@ bool R_DrawText(
     if (!R_CreateFont(font_name, width, height, ff))
         return false;
 
-    R_DrawText(&ff, text, x, y, xscale, yscale, color, right);
+    R_DrawText(localClientNum, &ff, text, x, y, xscale, yscale, color, right);
 
     if (f != nullptr)
         *f = std::move(ff);
@@ -286,24 +289,24 @@ bool R_DrawText(
     return true;
 }
 
-std::array<GfxTextDraw, 256> r_textDraws;
+std::array<std::array<GfxTextDraw, 256>, MAX_LOCAL_CLIENTS> r_textDraws;
 
-bool R_GetTextDraw(size_t id, OUT GfxTextDraw*& draw) {
+bool R_GetTextDraw(int localClientNum, size_t id, OUT GfxTextDraw*& draw) {
     draw = nullptr;
-    assert(id < r_textDraws.size());
+    assert(id < r_textDraws.at(localClientNum).size());
 
-    draw = &r_textDraws.at(id);
+    draw = &r_textDraws.at(localClientNum).at(id);
     assert(draw);
     return !draw->free;
 }
 
 
-bool R_FindFreeTextDraw(OUT size_t& index, OUT GfxTextDraw*& draw) {
+bool R_FindFreeTextDraw(int localClientNum, OUT size_t& index, OUT GfxTextDraw*& draw) {
     index = (size_t)-1;
     draw = nullptr;
 
-    for (int i = 0; i < (int)r_textDraws.size(); i++) {
-        R_GetTextDraw(i, draw);
+    for (int i = 0; i < (int)r_textDraws.at(localClientNum).size(); i++) {
+        R_GetTextDraw(localClientNum, i, draw);
         if (draw->free) {
             index = i;
             return true;
@@ -314,11 +317,12 @@ bool R_FindFreeTextDraw(OUT size_t& index, OUT GfxTextDraw*& draw) {
 }
 
 bool R_AddTextDraw(
-    GfxFont* font, std::string text, float x, float y, float xscale, float yscale,
-    glm::vec3 color, bool active, bool right, OUT size_t& id
+    int localClientNum, GfxFont* font, std::string text, float x, float y, 
+    float xscale, float yscale, glm::vec3 color, bool active, bool right, 
+    OUT size_t& id
 ) {
     GfxTextDraw* d = nullptr;
-    if (!R_FindFreeTextDraw(id, d))
+    if (!R_FindFreeTextDraw(localClientNum, id, d))
         return false;
 
     d->free = false;
@@ -335,26 +339,26 @@ bool R_AddTextDraw(
     return true;
 }
 
-bool R_UpdateTextDraw(size_t id, std::string text) {
+bool R_UpdateTextDraw(int localClientNum, size_t id, std::string text) {
     GfxTextDraw* d = nullptr;
-    if (!R_GetTextDraw(id, d))
+    if (!R_GetTextDraw(localClientNum, id, d))
         return false;
 
     d->text = text;
     return true;
 }
 
-bool R_ActivateTextDraw(size_t id, bool active) {
+bool R_ActivateTextDraw(int localClientNum, size_t id, bool active) {
     GfxTextDraw* d = nullptr;
-    R_GetTextDraw(id, d);
+    R_GetTextDraw(localClientNum, id, d);
     bool wasActive = d->active;
     d->active = active;
     return wasActive;
 }
 
-bool R_RemoveTextDraw(size_t id) {
+bool R_RemoveTextDraw(int localClientNum, size_t id) {
     GfxTextDraw* d = nullptr;
-    assert(R_GetTextDraw(id, d));
+    assert(R_GetTextDraw(localClientNum, id, d));
 
     if (d->free == true)
         return false;
@@ -364,18 +368,19 @@ bool R_RemoveTextDraw(size_t id) {
     return true;
 }
 
-void R_ClearTextDraws() {
-    for (auto& c : r_textDraws) {
+void R_ClearTextDraws(int localClientNum) {
+    for (auto& c : r_textDraws.at(localClientNum)) {
         c.active = false;
         c.free = true;
     }
 }
 
-void R_DrawTextDraws() {
-    for (const auto& c : r_textDraws) {
+void R_DrawTextDraws(int localClientNum) {
+    for (const auto& c : r_textDraws.at(localClientNum)) {
         if (!c.free && c.active) {
             R_DrawText(
-                c.font, c.text, c.x, c.y, c.xscale, c.yscale, c.color, c.right
+                localClientNum, c.font, c.text, c.x, c.y, 
+                c.xscale, c.yscale, c.color, c.right
             );
         }
     }

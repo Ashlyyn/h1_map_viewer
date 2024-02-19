@@ -36,6 +36,7 @@ struct GfxCamera {
 	float     pitch;
 	float     yaw;
     glm::mat4 perspectiveProjection;
+    glm::mat4 orthoProjection;
 };
 
 struct GfxShaderProgram {

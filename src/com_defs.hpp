@@ -49,6 +49,12 @@
 NO_RETURN Sys_NormalExit(int ec);
 uint64_t Sys_Milliseconds();
 
+constexpr size_t MAX_LOCAL_CLIENTS = 4;
+
+struct RectDef {
+	float x, y, w, h;
+};
+
 #define NOP() ;
 
 bool     Com_Init();
