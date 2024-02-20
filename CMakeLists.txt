@@ -20,7 +20,7 @@ add_executable(h1_map_viewer
  	src/db_files.cpp src/cmd_commands.cpp "src/cl_client.cpp" src/devgui.cpp 
 	src/gfx_text.cpp src/gfx_shaders.cpp src/devcon.cpp src/dvar.cpp 
 	src/con_console.cpp
-)
+ "src/pm_pmove.cpp" "src/m_math.cpp")
 
 target_link_libraries(h1_map_viewer PRIVATE Freetype::Freetype)
 target_link_libraries(h1_map_viewer PRIVATE GLEW::GLEW)

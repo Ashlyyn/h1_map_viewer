@@ -7,14 +7,16 @@
 
 #include "cl_client.hpp"
 #include "devcon.hpp"
+#include "dvar.hpp"
 #include "gfx.hpp"
 #include "in_input.hpp"
 
 SDL_Window* g_sdlWindow;
 
-int vid_xpos, vid_ypos;
-int vid_width  = VID_WIDTH_DEFAULT;
-int vid_height = VID_HEIGHT_DEFAULT;
+dvar_t* vid_xpos;
+dvar_t* vid_ypos;
+dvar_t* vid_width;
+dvar_t* vid_height;
 
 static uint64_t s_timeBase;
 
@@ -23,19 +25,26 @@ void Sys_InitThreads() {
 }
 
 void Sys_Init() {
-    SDL_Init(SDL_INIT_VIDEO);
-        
     s_timeBase = (uint64_t)SDL_GetTicks();
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    vid_width  = &Dvar_RegisterInt("vid_width", DVAR_FLAG_NONE, VID_WIDTH_DEFAULT,  1, INT_MAX);
+    vid_height = &Dvar_RegisterInt("vid_hight", DVAR_FLAG_NONE, VID_HEIGHT_DEFAULT, 1, INT_MAX);
 
     g_sdlWindow = SDL_CreateWindow(
         "Halo 1 Map Viewer",
-        vid_width,
-        vid_height,
+        Dvar_GetInt(*vid_width),
+        Dvar_GetInt(*vid_height),
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
 
-    SDL_GetWindowPosition(g_sdlWindow, &vid_xpos, &vid_ypos);
+    int x, y;
+    SDL_GetWindowPosition(g_sdlWindow, &x, &y);
+    vid_xpos = &Dvar_RegisterInt("vid_xpos", DVAR_FLAG_NONE, x, 0, INT_MAX);
+    vid_ypos = &Dvar_RegisterInt("vid_ypos", DVAR_FLAG_NONE, y, 0, INT_MAX);
     SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_SetWindowFullscreenMode(g_sdlWindow, NULL);
 
     if (g_sdlWindow == NULL) {
         printf("Could not create window: %s\n", SDL_GetError());
@@ -71,13 +80,13 @@ bool Sys_HandleEvent() {
             IN_Mouse_Move(CL_ClientWithKbmFocus(), ev.motion.xrel, ev.motion.yrel);
             break;
         case SDL_EVENT_WINDOW_RESIZED:
-            vid_width = ev.window.data1;
-            vid_height = ev.window.data2;
+            Dvar_SetInt(*vid_width, ev.window.data1);
+            Dvar_SetInt(*vid_height, ev.window.data2);
             R_WindowResized();
             break;
         case SDL_EVENT_WINDOW_MOVED:
-            vid_xpos = ev.window.data1;
-            vid_ypos = ev.window.data2;
+            Dvar_SetInt(*vid_xpos, ev.window.data1);
+            Dvar_SetInt(*vid_ypos, ev.window.data2);
             break;
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
             SDL_DestroyWindow(g_sdlWindow);

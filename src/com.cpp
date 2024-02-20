@@ -9,6 +9,7 @@
 #include "font.hpp"
 #include "gfx.hpp"
 #include "in_input.hpp"
+#include "pm_pmove.hpp"
 #include "sys.hpp"
 
 static uint64_t s_lastFrameTime;
@@ -25,10 +26,10 @@ bool Com_Init() {
     Cmd_AddCommand("quit", Com_Quit_f);
     Dvar_Init();
     Font_Init();
+    PM_Init();
     CG_Init();
     R_Init();
     CL_Init();
-    CL_EnableFpsCounter(true);
     DevGui_Init();
     s_lastFrameTime = Sys_Milliseconds();
     s_deltaTime = s_lastFrameTime;
@@ -53,7 +54,7 @@ bool Com_Frame() {
             continue;
 
         if (DevGui_HasText(i))
-            Con_ProcessInput(DevGui_TakeText(i));
+            Con_ProcessInput(DevGui_TakeText(i), i);
 
         R_DrawFrame(i);
     }

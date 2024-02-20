@@ -6,7 +6,7 @@ enum KeyFocus {
 };
 
 void     CL_Init();
-void     CL_EnableFpsCounter(bool enable);
+void     CL_EnableFpsCounter(int localClientNum, bool enable);
 void     CL_DrawFps_f();
 void     CL_Frame();
 void	 CL_GiveKbmFocus(int localClientNum);

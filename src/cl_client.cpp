@@ -17,12 +17,11 @@ struct cll_t {
 std::array<cll_t, MAX_LOCAL_CLIENTS> s_cll;
 
 struct cl_t {
+	dvar_t* drawfps;
 	bool hasKbmFocus;
 };
 
 std::array<cl_t, MAX_LOCAL_CLIENTS> s_cl;
-
-dvar_t* cl_drawfps;
 
 static uint64_t s_lastFpsDrawTime;
 static uint64_t s_lastFpsDrawDelta;
@@ -36,16 +35,16 @@ cl_t& CL_GetLocalClientGlobals(int localClientNum) {
 }
 
 void CL_Init() {
-	cl_drawfps = &Dvar_RegisterBool("cl_drawfps", DVAR_FLAG_NONE, false);
-
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		cl_t& cl = CL_GetLocalClientGlobals(i);
+		cl.drawfps = Dvar_RegisterLocalBool(i, "cl_drawfps", DVAR_FLAG_NONE, false);
 		CL_GetLocalClientLocals(i).drawDevGui = false;
 		CL_SetKeyFocus(i, KF_GAME);
 		assert(R_AddTextDraw(
 			i, NULL,
 			Com_Format("FPS: {:.0f}", 1000.0f / s_lastFpsDrawDelta),
 			0.9502f, 0.9502f, 0.5f, 0.5f,
-			glm::vec3(0.5, 0.8f, 0.2f), Dvar_GetBool(*cl_drawfps), true,
+			glm::vec3(0.5, 0.8f, 0.2f), Dvar_GetBool(*cl.drawfps), true,
 			CL_GetLocalClientLocals(i).fpsTextDrawId
 		));
 	}
@@ -53,8 +52,8 @@ void CL_Init() {
 	CL_GiveKbmFocus(0);
 }
 
-void CL_EnableFpsCounter(bool enable) {
-	Dvar_SetBool(*cl_drawfps, enable);
+void CL_EnableFpsCounter(int localClientNum, bool enable) {
+	Dvar_SetBool(*CL_GetLocalClientGlobals(localClientNum).drawfps, enable);
 }
 
 void CL_DrawFps(int localClientNum) {
@@ -66,15 +65,16 @@ void CL_DrawFps(int localClientNum) {
 
 void CL_Frame() {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		cl_t& cl = CL_GetLocalClientGlobals(i);
 		cll_t& cll = CL_GetLocalClientLocals(i);
-		R_ActivateTextDraw(i, cll.fpsTextDrawId, Dvar_GetBool(*cl_drawfps));
+		R_ActivateTextDraw(i, cll.fpsTextDrawId, Dvar_GetBool(*cl.drawfps));
 
 		if (Sys_Milliseconds() - s_lastFpsDrawTime > 40) {
 			s_lastFpsDrawTime = Sys_Milliseconds();
 			s_lastFpsDrawDelta = Com_LastFrameTimeDelta();
 		}
 
-		if (Dvar_GetBool(*cl_drawfps))
+		if (Dvar_GetBool(*cl.drawfps))
 			CL_DrawFps(i);
 
 		cll.drawDevGui = IN_Key_IsToggled(i, SDLK_BACKQUOTE);
@@ -113,9 +113,12 @@ void CL_SetKeyFocus(int localClientNum, KeyFocus f) {
 }
 
 void CL_Shutdown() {
-	Dvar_SetBool(*cl_drawfps, false);
-	cl_drawfps = nullptr;
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		cl_t& cl = CL_GetLocalClientGlobals(i);
+		Dvar_SetBool(*cl.drawfps, false);
+		Dvar_UnregisterLocal(i, "cl_drawfps");
+		cl.drawfps = nullptr;
+
 		cll_t& cll = CL_GetLocalClientLocals(i);
 		cll.drawDevGui = false;
 		cll.keyfocus = KF_GAME;

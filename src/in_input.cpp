@@ -9,8 +9,10 @@
 #include <cstring>
 
 #include "cl_client.hpp"
+#include "dvar.hpp"
 
-extern int vid_width, vid_height;
+extern dvar_t* vid_width;
+extern dvar_t* vid_height;
 
 union MouseButtons {
 	struct { bool ml, mm, mr, m4, m5; } m;
@@ -192,16 +194,30 @@ SDL_Keycode IN_Key_GetNum(int localClientNum, std::string_view binding) {
 	return -1;
 }
 
+void IN_Key_Clear(int localClientNum) {
+	inl_t& inl = IN_GetLocalClientLocals(localClientNum);
+	for (auto& c : inl.keys) {
+		c.second.down = false;
+		c.second.justDown = false;
+	}
+
+	inl.keysPressedOnCurrentFrame.clear();
+}
+
+static void IN_Key_ClearCurrent(int localClientNum) {
+	inl_t& inl = IN_GetLocalClientLocals(localClientNum);
+	for (auto& c : inl.keys)
+		c.second.justDown = false;
+
+	inl.keysPressedOnCurrentFrame.clear();
+}
+
 void IN_Key_Frame() {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
-		if (!CL_HasKbmFocus(i))
-			continue;
-
-		inl_t& inl = IN_GetLocalClientLocals(i);
-		for (auto& c : inl.keys)
-			c.second.justDown = false;
-
-		inl.keysPressedOnCurrentFrame.clear();
+		if (CL_HasKbmFocus(i)) {
+			IN_Key_ClearCurrent(i);
+			break;
+		}
 	}
 }
 
@@ -216,8 +232,8 @@ void IN_Key_Shutdown() {
 void IN_Mouse_Init() {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
 		inl_t& inl = IN_GetLocalClientLocals(i);
-		inl.mouse.x = (float)vid_width  / 2.0f;
-		inl.mouse.y = (float)vid_height / 2.0f;
+		inl.mouse.x = (float)Dvar_GetInt(*vid_width)  / 2.0f;
+		inl.mouse.y = (float)Dvar_GetInt(*vid_height) / 2.0f;
 	}
 }
 
@@ -266,8 +282,8 @@ void IN_Mouse_Shutdown() {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
 		inl_t& inl = IN_GetLocalClientLocals(i);
 		inl.mouse = Mouse{};
-		inl.mouse.x = (float)vid_width / 2.0f;
-		inl.mouse.y = (float)vid_height / 2.0f;
+		inl.mouse.x = (float)Dvar_GetInt(*vid_width)  / 2.0f;
+		inl.mouse.y = (float)Dvar_GetInt(*vid_height) / 2.0f;
 	}
 }
 

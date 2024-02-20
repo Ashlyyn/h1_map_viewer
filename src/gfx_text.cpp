@@ -6,11 +6,13 @@
 
 #include "cg_cgame.hpp"
 #include "db_files.hpp"
+#include "dvar.hpp"
 #include "gfx_shaders.hpp"
 #include "gfx_uniform.hpp"
 #include "sys.hpp"
 
-extern int vid_width, vid_height;
+extern dvar_t* vid_width;
+extern dvar_t* vid_height;
 GfxFont r_defaultFont;
 
 inline static const std::array<GfxSubTexDef, 6> s_subTexDefs = {
@@ -138,8 +140,8 @@ void R_DrawText(
     if (font == nullptr)
         font = &r_defaultFont;
 
-    x *= vid_width;
-    y *= vid_height;
+    x *= Dvar_GetInt(*vid_width);
+    y *= Dvar_GetInt(*vid_height);
 
     float firstX = x;
 

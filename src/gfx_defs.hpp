@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 
 #include "com_print.hpp"
+#include "dvar.hpp"
 #include "font.hpp"
 
 typedef unsigned int vbo_t;
@@ -21,7 +22,8 @@ typedef unsigned int image_format_t;
 
 constexpr inline float VFOV_DEFAULT = 74.0f;
 
-extern int vid_width, vid_height;
+extern dvar_t* vid_width;
+extern dvar_t* vid_height;
 
 struct GfxSubTexDef {
     float x, y, u, v;
@@ -368,9 +370,9 @@ NO_DISCARD inline float FOV_HORZ_TO_VERTICAL(float fovh, float aspect_inv) {
 }
 
 NO_DISCARD inline float VID_ASPECT() {
-    return (float)vid_width / (float)vid_height;
+    return (float)Dvar_GetInt(*vid_width) / (float)Dvar_GetInt(*vid_width);
 }
 
 NO_DISCARD inline float VID_ASPECT_INV() {
-    return (float)vid_height / (float)vid_width;
+    return (float)Dvar_GetInt(*vid_width) / (float)Dvar_GetInt(*vid_width);
 }

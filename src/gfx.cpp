@@ -10,12 +10,14 @@
 
 #include "cg_cgame.hpp"
 #include "db_files.hpp"
+#include "dvar.hpp"
 #include "gfx_backend.hpp"
 #include "gfx_text.hpp"
 #include "gfx_uniform.hpp"
 #include "sys.hpp"
 
-extern int vid_width, vid_height;
+extern dvar_t* vid_width;
+extern dvar_t* vid_height;
 extern void R_DrawTextDraws(int localClientNum);
 extern void R_ClearTextDraws(int localClientNum);
 
@@ -35,6 +37,7 @@ void GLAPIENTRY R_GlDebugOutput(
     );
 }
 
+static void R_RegisterDvars();
 static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim);
 static void R_DrawFrameInternal(int localClientNum);
 static void R_InitLocalClient(int localClientNum);
@@ -42,6 +45,10 @@ static void R_UpdateLocalClientView(int localClientNum);
 
 constexpr float NEAR_PLANE_DEFAULT = 0.1f;
 constexpr float FAR_PLANE_DEFAULT  = 100.0f;
+
+dvar_t* r_vsync;
+dvar_t* r_fullscreen;
+dvar_t* r_noBorder;
 
 GfxCubePrim r_cubePrim;
 extern GfxFont r_defaultFont;
@@ -74,6 +81,8 @@ void R_Init() {
         R_ClearTextDraws(i);
     }
 
+    R_RegisterDvars();
+
     assert(R_CreateFont("consola.ttf", 0, 48, r_defaultFont));
     
     R_AddTextDraw(
@@ -98,21 +107,27 @@ static void R_UpdateLocalClientView(int localClientNum) {
     cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 
     GL_CALL(glViewport,
-        (GLint)(cg.viewport.x * vid_width), 
-        (GLint)(cg.viewport.y * vid_height),
-        (GLsizei)(cg.viewport.w * vid_width), 
-        (GLsizei)(cg.viewport.h * vid_height)
+        (GLint)(cg.viewport.x *  Dvar_GetInt(*vid_width)), 
+        (GLint)(cg.viewport.y * Dvar_GetInt(*vid_height)),
+        (GLsizei)(cg.viewport.w * Dvar_GetInt(*vid_width)), 
+        (GLsizei)(cg.viewport.h * Dvar_GetInt(*vid_height))
     );
 
-    float left = cg.viewport.x * vid_width;
-    float right = cg.viewport.w * vid_width + left;
-    float bottom = cg.viewport.y * vid_height;
-    float top = cg.viewport.h * vid_height + bottom;
+    float left = cg.viewport.x * Dvar_GetInt(*vid_width);
+    float right = cg.viewport.w * Dvar_GetInt(*vid_width) + left;
+    float bottom = cg.viewport.y * Dvar_GetInt(*vid_height);
+    float top = cg.viewport.h * Dvar_GetInt(*vid_height) + bottom;
     cg.camera.orthoProjection = glm::ortho(left, right, bottom, top);
     cg.camera.perspectiveProjection = glm::perspective(
         FOV_HORZ_TO_VERTICAL(cg.fov, cg.viewport.h / cg.viewport.w),
         cg.viewport.w / cg.viewport.h, cg.nearPlane, cg.farPlane
     );
+}
+
+static void R_RegisterDvars() {
+    r_vsync      = &Dvar_RegisterBool("r_vsync", DVAR_FLAG_NONE, true);
+    r_fullscreen = &Dvar_RegisterBool("r_fullscreen", DVAR_FLAG_NONE, false);
+    r_noBorder   = &Dvar_RegisterBool("r_noBorder", DVAR_FLAG_NONE, false);
 }
 
 static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
@@ -173,7 +188,6 @@ void R_WindowResized() {
     for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
         R_UpdateLocalClientView(i);
     }
-    
 }
 
 NO_DISCARD bool R_CreateImage(
@@ -299,8 +313,20 @@ static void R_DrawFrameInternal(int localClientNum) {
     R_DrawTextDraws(localClientNum);
 }
 
+static void R_UnregisterDvars() {
+    Dvar_Unregister("r_noBorder");
+    r_noBorder = nullptr;
+    Dvar_Unregister("r_fullscreen");
+    r_fullscreen = nullptr;
+    Dvar_Unregister("r_vsync");
+    r_vsync = nullptr;
+}
+
 void R_Shutdown() {
-    R_ClearTextDraws(0);
+    for(int i = 0; i < MAX_LOCAL_CLIENTS; i++)
+        R_ClearTextDraws(i);
+
+    R_UnregisterDvars();
     IMG_Quit();
     RB_Shutdown();
 }

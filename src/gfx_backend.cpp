@@ -5,9 +5,14 @@
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 
+#include "dvar.hpp"
+#include "gfx.hpp"
 #include "sys.hpp"
 
 extern SDL_Window* g_sdlWindow;
+extern dvar_t* r_vsync;
+extern dvar_t* r_fullscreen;
+extern dvar_t* r_noBorder;
 
 static SDL_GLContext s_glContext;
 
@@ -39,8 +44,60 @@ void RB_Init() {
     }
 }
 
-void RB_BeginFrame() {
+extern dvar_t* vid_width;
+extern dvar_t* vid_height;
+extern dvar_t* vid_xpos;
+extern dvar_t* vid_ypos;
 
+void RB_BeginFrame() {
+    if (Dvar_WasModified(*r_vsync)) {
+        if (Dvar_GetBool(*r_vsync))
+            SDL_GL_SetSwapInterval(1);
+        else
+            SDL_GL_SetSwapInterval(0);
+
+        Dvar_ClearModified(*r_vsync);
+    }
+
+    if (Dvar_WasModified(*r_fullscreen)) {
+        if (Dvar_GetBool(*r_fullscreen)) {
+            Dvar_LatchValue(*vid_width);
+            Dvar_LatchValue(*vid_height);
+            Dvar_LatchValue(*vid_xpos);
+            Dvar_LatchValue(*vid_ypos);
+            SDL_DisplayID d = SDL_GetDisplayForWindow(g_sdlWindow);
+            const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(d);
+            SDL_SetWindowSize(g_sdlWindow, mode->w, mode->h);
+            Dvar_SetInt(*vid_width, mode->w);
+            Dvar_SetInt(*vid_height, mode->h);
+            R_WindowResized();
+            SDL_SetWindowPosition(g_sdlWindow, 0, 0);
+            SDL_SetWindowResizable(g_sdlWindow, SDL_FALSE);
+            Dvar_SetBool(*r_fullscreen, true);
+        }
+        else {
+            Dvar_SetBool(*r_fullscreen, false);
+            SDL_SetWindowResizable(g_sdlWindow, SDL_TRUE);
+            Dvar_RestoreValue(*vid_xpos);
+            Dvar_RestoreValue(*vid_ypos);
+            Dvar_RestoreValue(*vid_width);
+            Dvar_RestoreValue(*vid_height);
+            SDL_SetWindowPosition(g_sdlWindow, Dvar_GetInt(*vid_xpos), Dvar_GetInt(*vid_ypos));
+            SDL_SetWindowSize(g_sdlWindow, Dvar_GetInt(*vid_width), Dvar_GetInt(*vid_height));
+            R_WindowResized();
+        }
+
+        Dvar_ClearModified(*r_fullscreen);
+    }
+
+    if (Dvar_WasModified(*r_noBorder)) {
+        if (Dvar_GetBool(*r_noBorder))
+            SDL_SetWindowBordered(g_sdlWindow, SDL_FALSE);
+        else
+            SDL_SetWindowBordered(g_sdlWindow, SDL_TRUE);
+
+        Dvar_ClearModified(*r_noBorder);
+    }
 }
 
 void RB_EndFrame() {

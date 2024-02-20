@@ -3,7 +3,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "dvar.hpp"
 #include "in_input.hpp"
+#include "pm_pmove.hpp"
 
 static float s_lastMouseX, s_lastMouseY;
 static bool  s_firstMouse;
@@ -33,7 +35,8 @@ void CG_Init() {
 	s_lastMouseX = IN_Mouse_X(0);
 	s_lastMouseY = IN_Mouse_Y(0);
 
-	for (auto& cg : s_cg) {
+	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		cg_t& cg = CG_GetLocalClientGlobals(i);
 		cg.camera.pos = glm::vec3(0.0f, 0.0f, 0.0f);
 		cg.camera.worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 		cg.camera.front = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -49,11 +52,14 @@ void CG_Init() {
 		cg.fov = 120.0f;
 		cg.sensitivity = 0.1f;
 		cg.active = false;
+
+		PM_GetLocalClientGlobals(i).pm.ps->commandTime = Sys_Milliseconds();
 	}
 
 	CG_ActivateLocalClient(0);
 }
 
+/*
 void CG_MoveForward(int localClientNum, float vel) {
 	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos += vel * cg.camera.front;
@@ -87,6 +93,7 @@ void CG_Descend(int localClientNum, float vel) {
 	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 	cg.camera.pos -= vel * cg.camera.up;
 }
+*/
 
 void CG_Look(int localClientNum, float x, float y) {
 	if (s_firstMouse) {
@@ -122,6 +129,9 @@ void CG_Look(int localClientNum, float x, float y) {
 	cg.camera.front = glm::normalize(front);
 }
 
+extern dvar_t* r_fullscreen;
+extern dvar_t* r_noBorder;
+
 void CG_Frame(uint64_t deltaTime) {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
 		if (!CL_HasKbmFocus(i) || CL_KeyFocus(i) != KF_GAME)
@@ -130,36 +140,73 @@ void CG_Frame(uint64_t deltaTime) {
 		if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_m)) {
 			CG_ActivateLocalClient(1);
 			CL_GiveKbmFocus(1);
+			IN_Key_Clear(0);
 			CG_DectivateLocalClient(0);
-		}
-		else if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_n)) {
-			CG_DectivateLocalClient(1);
-			CL_GiveKbmFocus(0);
+		} else if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_n)) {
 			CG_ActivateLocalClient(0);
+			CL_GiveKbmFocus(0);
+			IN_Key_Clear(1);
+			CG_DectivateLocalClient(1);
 		}
 
-		float vel = 2.5f * ((float)deltaTime / 1000.0f);
+		if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_F10))
+			Dvar_SetBool(*r_noBorder, !Dvar_GetBool(*r_noBorder));
+
+		if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_F11))
+			Dvar_SetBool(*r_fullscreen, !Dvar_GetBool(*r_fullscreen));
+
+		float vel = 2.5f * ((float)deltaTime);
 		if (IN_Key_IsDown(i, SDLK_LSHIFT))
 			vel *= 2;
 
+		pm_t& pm = PM_GetLocalClientGlobals(i);
+
 		if (IN_Key_IsDown(i, SDLK_w))
-			CG_MoveForward(i, vel);
+			pm.pm.cmd.vel.z =  vel;
+			//CG_MoveForward(i, vel);
 		if (IN_Key_IsDown(i, SDLK_s))
-			CG_MoveBackward(i, vel);
+			pm.pm.cmd.vel.z = -vel;
+			//CG_MoveBackward(i, vel);
 		if (IN_Key_IsDown(i, SDLK_a))
-			CG_StrafeLeft(i, vel);
+			pm.pm.cmd.vel.x = -vel;
+			//CG_StrafeLeft(i, vel);
 		if (IN_Key_IsDown(i, SDLK_d))
-			CG_StrafeRight(i, vel);
+			pm.pm.cmd.vel.x =  vel;
+			//CG_StrafeRight(i, vel);
 		if (IN_Key_IsDown(i, SDLK_SPACE))
-			CG_Ascend(i, vel);
+			pm.pm.cmd.vel.y =  vel;
+			//CG_Ascend(i, vel);
 		if (IN_Key_IsDown(i, SDLK_LCTRL))
-			CG_Descend(i, vel);
+			pm.pm.cmd.vel.y = -vel;
+			//CG_Descend(i, vel);
 
 		//Com_DPrintln("x={}, y={}", IN_Mouse_X(), IN_Mouse_Y());
-		if (s_lastMouseX != IN_Mouse_X(i) || s_lastMouseY != IN_Mouse_Y(i)) {
-			CG_Look(i, IN_Mouse_X(i), IN_Mouse_Y(i));
+		cg_t& cg = CG_GetLocalClientGlobals(i);
+		float x = IN_Mouse_X(i);
+		float y = IN_Mouse_Y(i);
+		if (s_lastMouseX != x || s_lastMouseY != y) {
+			if (s_firstMouse) {
+				s_lastMouseX = x;
+				s_lastMouseY = y;
+				s_firstMouse = false;
+			}
+
+			float xoff = x - s_lastMouseX;
+			float yoff = y - s_lastMouseY;
+			s_lastMouseX = x;
+			s_lastMouseY = y;
+
+			xoff *= cg.sensitivity;
+			yoff *= cg.sensitivity;
+			pm.pm.cmd.yaw   = xoff;
+			pm.pm.cmd.pitch = yoff;
+			//CG_Look(i, IN_Mouse_X(i), IN_Mouse_Y(i));
 		}
-		break;
+
+		pm.pm.cmd.serverTime = Sys_Milliseconds();
+		PmoveSingle(pm.pm, pm.pml);
+		cg.camera.pos = pm.pm.ps->origin;
+		cg.camera.front = pm.pml.forward;
 	}
 }
 

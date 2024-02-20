@@ -29,5 +29,6 @@ NO_DISCARD float IN_Mouse_X(int localClientNum);
 NO_DISCARD float IN_Mouse_Y(int localClientNum);
 void IN_Mouse_Shutdown();
 
+void IN_Key_Clear(int localClientNum);
 void IN_Frame();
 void IN_Shutdown();
