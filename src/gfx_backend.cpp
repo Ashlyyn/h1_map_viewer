@@ -34,9 +34,6 @@ void RB_Init() {
         Sys_NormalExit(-1);
     }
 
-    //if (SDL_GL_SetSwapInterval(0) != 0)
-    //    printf("Failed to disable vsync for window: %s\n", SDL_GetError());
-
     GLenum err = glewInit();
     if (err != GLEW_OK) {
         printf("GLEW init failed: %s", glewGetErrorString(err));
@@ -49,14 +46,19 @@ extern dvar_t* vid_height;
 extern dvar_t* vid_xpos;
 extern dvar_t* vid_ypos;
 
+bool RB_EnableVsync(bool enable) {
+    return SDL_GL_SetSwapInterval((int)enable) == 0;
+}
+
 void RB_BeginFrame() {
     if (Dvar_WasModified(*r_vsync)) {
-        if (Dvar_GetBool(*r_vsync))
-            SDL_GL_SetSwapInterval(1);
-        else
-            SDL_GL_SetSwapInterval(0);
-
-        Dvar_ClearModified(*r_vsync);
+        bool enable = Dvar_GetBool(*r_vsync);
+        if (!RB_EnableVsync(enable)) {
+            Com_Println(
+                CON_DEST_ERR, "Failed to {} vsync: {}",
+                enable ? "enable" : "disable", SDL_GetError()
+            );
+        }
     }
 
     if (Dvar_WasModified(*r_fullscreen)) {
@@ -67,7 +69,7 @@ void RB_BeginFrame() {
             Dvar_LatchValue(*vid_ypos);
             SDL_DisplayID d = SDL_GetDisplayForWindow(g_sdlWindow);
             const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(d);
-            SDL_SetWindowSize(g_sdlWindow, mode->w, mode->h);
+            SDL_SetWindowSize(g_sdlWindow, mode->w, mode->h + 1);
             Dvar_SetInt(*vid_width, mode->w);
             Dvar_SetInt(*vid_height, mode->h);
             R_WindowResized();

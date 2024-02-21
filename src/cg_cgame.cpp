@@ -180,7 +180,6 @@ void CG_Frame(uint64_t deltaTime) {
 			pm.pm.cmd.vel.y = -vel;
 			//CG_Descend(i, vel);
 
-		//Com_DPrintln("x={}, y={}", IN_Mouse_X(), IN_Mouse_Y());
 		cg_t& cg = CG_GetLocalClientGlobals(i);
 		float x = IN_Mouse_X(i);
 		float y = IN_Mouse_Y(i);
@@ -195,11 +194,12 @@ void CG_Frame(uint64_t deltaTime) {
 			float yoff = y - s_lastMouseY;
 			s_lastMouseX = x;
 			s_lastMouseY = y;
+			Com_DPrintln("x={}, y={}", xoff, yoff);
 
 			xoff *= cg.sensitivity;
 			yoff *= cg.sensitivity;
-			pm.pm.cmd.yaw   = xoff;
-			pm.pm.cmd.pitch = yoff;
+			pm.pm.cmd.yaw   = -xoff;
+			pm.pm.cmd.pitch = -yoff;
 			//CG_Look(i, IN_Mouse_X(i), IN_Mouse_Y(i));
 		}
 

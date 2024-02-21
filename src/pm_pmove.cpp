@@ -71,9 +71,9 @@ void PM_UpdateViewAngles(INOUT playerState_t& ps, const usercmd_t& cmd) {
 	if (ps.pm_type != PM_NOCLIP)
 		return;
 
-	ps.viewyaw   = ps.deltayaw  + cmd.yaw;
-	ps.viewroll  = ps.deltaroll + cmd.roll;
-	ps.viewpitch = std::clamp(ps.deltapitch + cmd.pitch, -89.0f, 89.0f);
+	ps.viewyaw   += ps.deltayaw  + cmd.yaw;
+	ps.viewroll  += ps.deltaroll + cmd.roll;
+	ps.viewpitch = std::clamp(ps.viewpitch + ps.deltapitch + cmd.pitch, -89.0f, 89.0f);
 }
 
 void PmoveSingle(INOUT pmove_t& pm, INOUT pml_t& pml) {
