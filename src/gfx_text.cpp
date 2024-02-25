@@ -7,13 +7,14 @@
 #include "cg_cgame.hpp"
 #include "db_files.hpp"
 #include "dvar.hpp"
+#include "font.hpp"
 #include "gfx_shaders.hpp"
 #include "gfx_uniform.hpp"
 #include "sys.hpp" 
 
 extern dvar_t* vid_width;
 extern dvar_t* vid_height;
-GfxFont r_defaultFont;
+FontDef r_defaultFont;
 
 inline static const std::array<GfxSubTexDef, 6> s_subTexDefs = {
     GfxSubTexDef {.x = 0, .y = 0, .u = 0, .v = 1 },
@@ -27,15 +28,7 @@ inline static const std::array<GfxSubTexDef, 6> s_subTexDefs = {
 // ============================================================================
 // DON'T TOUCH ANY OF THIS. DON'T EVEN LOOK AT IT THE WRONG WAY. LEAVE IT ALONE
 // AND BE HAPPY YOU DIDN'T SPEND TEN HOURS GETTING IT TO WORK.
-NO_DISCARD bool R_CreateFont(
-    std::string_view font_name, int width, int height, OUT GfxFont& f
-) {
-    f = GfxFont{};
-
-    FontDef fd;
-    if (!Font_Load(font_name, width, height, fd))
-        return false;
-
+NO_DISCARD bool R_CreateTextureAtlas(INOUT FontDef& f) {
     if (!R_CreateShaderProgram(
         DB_LoadShader("text.vs.glsl"),
         DB_LoadShader("text.fs.glsl"),
@@ -44,7 +37,7 @@ NO_DISCARD bool R_CreateFont(
         return false;
     }
 
-    for (const auto& g : fd.Glyphs()) {
+    for (const auto& g : f.Glyphs()) {
         f.atlas_width += g.width + 1;
         f.atlas_height = std::max(f.atlas_height, g.height);
     }
@@ -96,26 +89,19 @@ NO_DISCARD bool R_CreateFont(
     GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int x = 0;
-    for(const auto& g : fd.Glyphs()) {
+    for(auto& g : f.Glyphs()) {
         if (g.advance_x == 0)
             continue;
-
-        GfxGlyph gg;
-        gg.width     = g.width;
-        gg.height    = g.height;
-        gg.advance_x = g.advance_x >> 6;
-        gg.advance_y = 0;
-        gg.left      = g.left;
-        gg.top       = g.top;
-        gg.atlas_x   = (float)x / (float)f.atlas_width;
-        gg.atlas_y   = 0;
-        f.AddGlyph(g.c, gg);
 
         if (g.pixels.size() > 0)
             GL_CALL(glTexSubImage2D,
                 GL_TEXTURE_2D, 0, x, 0, g.width, g.height,
                 GL_RED, GL_UNSIGNED_BYTE, g.pixels.data()
             );
+
+        g.pixels.clear();
+        g.atlas_x = (float)x / (float)f.atlas_width;
+        g.atlas_y = 0.0f;
 
         x += g.width + 1;
     }
@@ -133,7 +119,7 @@ NO_DISCARD bool R_CreateFont(
 // ============================================================================
 
 void R_DrawText(
-    int localClientNum, OPTIONAL_IN const GfxFont* font, std::string_view text, 
+    int localClientNum, OPTIONAL_IN const FontDef* font, std::string_view text, 
     float x, float y, float xscale, float yscale, const glm::vec3& color, 
     bool right
 ) {
@@ -163,7 +149,7 @@ void R_DrawText(
 
     char            last_c = '\0';
     float           last_w = 0, last_h = 0;
-    const GfxGlyph* last_g = nullptr;
+    const GlyphDef* last_g = nullptr;
 
     int i = right ? (int)text.size() - 1 : 0;
     const int end = right ? -1 : (int)text.size();
@@ -186,7 +172,7 @@ void R_DrawText(
             c = '#';
 
         // Reuse the last glyph if it's going to be rendered again.
-        const GfxGlyph* g = nullptr;
+        const GlyphDef* g = nullptr;
         if (c == last_c)
             g = last_g;
         else
@@ -269,26 +255,6 @@ void R_DrawText(
     GL_CALL(glDisable, GL_BLEND);
 }
 
-bool R_DrawText(
-    int localClientNum, std::string_view font_name, std::string_view text, 
-    int width, int height, float x, float y, float xscale, float yscale, 
-    const glm::vec3& color, bool right, OPTIONAL_OUT GfxFont* f
-) {
-    if (f != nullptr)
-        *f = GfxFont{};
-
-    GfxFont ff;
-    if (!R_CreateFont(font_name, width, height, ff))
-        return false;
-
-    R_DrawText(localClientNum, &ff, text, x, y, xscale, yscale, color, right);
-
-    if (f != nullptr)
-        *f = std::move(ff);
-
-    return true;
-}
-
 std::array<std::array<GfxTextDraw, 256>, MAX_LOCAL_CLIENTS> r_textDraws;
 
 bool R_GetTextDraw(int localClientNum, size_t id, OUT GfxTextDraw*& draw) {
@@ -317,7 +283,7 @@ bool R_FindFreeTextDraw(int localClientNum, OUT size_t& index, OUT GfxTextDraw*&
 }
 
 bool R_AddTextDraw(
-    int localClientNum, GfxFont* font, std::string text, float x, float y, 
+    int localClientNum, FontDef* font, std::string text, float x, float y, 
     float xscale, float yscale, glm::vec3 color, bool active, bool right, 
     OUT size_t& id
 ) {

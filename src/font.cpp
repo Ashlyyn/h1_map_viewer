@@ -2,6 +2,7 @@
 
 #include "com_print.hpp"
 #include "db_files.hpp"
+#include "gfx_text.hpp"
 
 static FT_Library s_ft;
 
@@ -42,8 +43,8 @@ bool Font_Load(
 		glyph.height    = face->glyph->bitmap.rows;
 		glyph.left      = face->glyph->bitmap_left;
 		glyph.top       = face->glyph->bitmap_top;
-		glyph.advance_x = face->glyph->advance.x;
-		glyph.advance_y = face->glyph->advance.y;
+		glyph.advance_x = face->glyph->advance.x >> 6;
+		glyph.advance_y = face->glyph->advance.y >> 6;
 		glyph.pixels    = std::vector<unsigned char>(glyph.width * glyph.height);
 		memcpy(
 			glyph.pixels.data(), face->glyph->bitmap.buffer,
@@ -51,6 +52,9 @@ bool Font_Load(
 		);
 		fd.AddGlyph(c, glyph);
 	}
+
+	bool b = R_CreateTextureAtlas(fd);
+	assert(b);
 
 	FT_Done_Face(face);
 	return true;

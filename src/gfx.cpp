@@ -11,6 +11,7 @@
 #include "cg_cgame.hpp"
 #include "db_files.hpp"
 #include "dvar.hpp"
+#include "font.hpp"
 #include "gfx_backend.hpp"
 #include "gfx_text.hpp"
 #include "gfx_uniform.hpp"
@@ -55,7 +56,7 @@ dvar_t* r_fullscreen;
 dvar_t* r_noBorder;
 
 GfxCubePrim r_cubePrim;
-extern GfxFont r_defaultFont;
+extern FontDef r_defaultFont;
 
 size_t r_testDrawId = 0;
 
@@ -87,7 +88,7 @@ void R_Init() {
 
     R_RegisterDvars();
 
-    bool b = R_CreateFont("consola.ttf", 0, 48, r_defaultFont);
+    bool b = Font_Load("consola.ttf", 0, 48, r_defaultFont);
     assert(b);
     
     R_AddTextDraw(

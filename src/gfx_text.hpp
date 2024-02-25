@@ -7,21 +7,14 @@
 #include "gfx_defs.hpp"
 
 
-NO_DISCARD bool R_CreateFont(
-	std::string_view font_name, int width, int height, OUT GfxFont& f
-);
+NO_DISCARD bool R_CreateTextureAtlas(INOUT FontDef& f);
 void R_DrawText(
- 	int localClientNum, OPTIONAL_IN const GfxFont* font, std::string_view text,
+ 	int localClientNum, OPTIONAL_IN const FontDef* font, std::string_view text,
 	float x, float y, float xscale, float yscale, const glm::vec3& color, 
 	bool right = false
 );
-bool R_DrawText(
-	int localClientNum, std::string_view font_name, std::string_view text,
-	int width, int height, float x, float y, float xscale, float yscale, 
-	const glm::vec3& color, bool right, OPTIONAL_OUT GfxFont* f
-);
 bool R_AddTextDraw(
-	int localClientNum, GfxFont* font, std::string text, float x, float y, 
+	int localClientNum, FontDef* font, std::string text, float x, float y, 
 	float xscale, float yscale, glm::vec3 color, bool active, bool right, 
 	OUT size_t& id
 );

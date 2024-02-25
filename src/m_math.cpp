@@ -33,4 +33,4 @@ void M_AngleVectors(
 		up->y = cr * cp;
 		up->z = (cr * sp * sy + -sr * cy);
 	}
-}
+} 

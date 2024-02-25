@@ -9,7 +9,7 @@
 
 #include "com_print.hpp"
 #include "dvar.hpp"
-#include "font.hpp"
+#include "m_math.hpp"
 
 typedef unsigned int vbo_t;
 typedef unsigned int vao_t;
@@ -81,96 +81,6 @@ struct GfxShaderProgram {
     }
 };
 
-struct GfxGlyph {
-    int width, height;
-    int left;
-    int top;
-    int advance_x, advance_y;
-    float atlas_x, atlas_y;
-};
-
-struct GfxFont {
-    int atlas_width, atlas_height;
-    GfxShaderProgram prog;
-    vao_t vao;
-    vbo_t vbo;
-    texture_t tex;
-
-    void Take(GfxFont&& other) {
-        glyphs = other.glyphs;
-        atlas_width = other.atlas_width;
-        atlas_height = other.atlas_height;
-        prog = std::move(other.prog);
-        vao = other.vao;
-        vbo = other.vbo;
-        tex = other.tex;
-
-        other.atlas_height = 0;
-        other.atlas_width = 0;
-        other.vao = 0;
-        other.vbo = 0;
-        other.tex = 0;
-    }
-
-    GfxFont() {
-        atlas_width = 0;
-        atlas_height = 0;
-        vao = 0;
-        vbo = 0;
-        tex = 0;
-    }
-
-    GfxFont(const GfxFont&) = delete;
-    GfxFont(GfxFont&& other) {
-        Take(std::move(other));
-    }
-
-    GfxFont& operator=(const GfxFont&) = delete;
-    GfxFont& operator=(GfxFont&& other) {
-        Take(std::move(other));
-        return *this;
-    }
-
-    inline bool AddGlyph(char c, const GfxGlyph& g) {
-        if (c < 32 || c > 127)
-            return false;
-
-        glyphs[c - 32] = g;
-        return true;
-    }
-
-    inline bool RemoveGlyph(char c) {
-        if (c < 32 || c > 127)
-            return false;
-
-        glyphs[c - 32] = GfxGlyph{};
-        return true;
-    }
-
-    inline bool GetGlyph(char c, OUT const GfxGlyph*& g) const {
-        if (c < 32 || c > 127) {
-            g = nullptr;
-            return false;
-        }
-
-        g = &glyphs[c - 32];
-        return true;
-    }
-
-    inline std::span<GfxGlyph> Glyphs() {
-        return std::span(glyphs);
-    }
-
-    inline ~GfxFont() {
-        glDeleteTextures(1, &tex);
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &vao);
-    }
-
-private:
-    std::array<GfxGlyph, 95> glyphs;
-};
-
 struct GfxCubePrim {
 	inline static const float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -230,9 +140,11 @@ struct SdlSurfaceDeleter {
 
 using SdlSurface = std::unique_ptr<SDL_Surface, SdlSurfaceDeleter>;
 
+struct FontDef;
+
 struct GfxTextDraw {
     bool free;
-    GfxFont* font;
+    FontDef* font;
     std::string text;
     float x, y;
     float xscale, yscale;
@@ -366,11 +278,11 @@ auto inline R_GlCallImpl(
 
 // can't be constexpr since atan() isn't constexpr for some reason
 NO_DISCARD inline float FOV_HORZ_TO_VERTICAL(float fovx, float aspect_inv) {
-    return 2.0f * glm::degrees(atan(tan(glm::radians(fovx) / 2) * aspect_inv));
+    return 2.0f * glm::degrees(M_atan(M_tan(glm::radians(fovx) / 2) * aspect_inv));
 }
 
 NO_DISCARD inline float FOV_VERTICAL_TO_HORZ(float fovy, float aspect) {
-    return 2.0f * glm::degrees(atan(tan(glm::radians(fovy) / 2) * aspect));
+    return 2.0f * glm::degrees(M_atan(M_tan(glm::radians(fovy) / 2) * aspect));
 }
 
 NO_DISCARD inline float VID_ASPECT() {
