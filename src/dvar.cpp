@@ -70,10 +70,10 @@ struct dvar_t {
 		domain.i.min = min;
 		domain.i.max = max;
 		e.push_back(Com_Format("{}", value));
-		modified = false;
 		hasLatched = false;
 
 		Dvar_SetInt(*this, value);
+		modified = false;
 	}
 
 	inline dvar_t(
@@ -84,20 +84,20 @@ struct dvar_t {
 		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
-		modified = false;
 		hasLatched = false;
 
 		Dvar_SetFloat(*this, value);
+		modified = false;
 	}
 
 	inline dvar_t(dvarFlags_t flags, std::string value) {
 		type = DVAR_TYPE_STRING;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
-		modified = false;
 		hasLatched = false;
 
 		Dvar_SetString(*this, value);
+		modified = false;
 	}
 
 	inline dvar_t(
@@ -121,10 +121,10 @@ struct dvar_t {
 		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
-		modified = false;
 		hasLatched = false;
 
 		Dvar_SetVec2(*this, value);
+		modified = false;
 	}
 
 	inline dvar_t(
@@ -136,10 +136,10 @@ struct dvar_t {
 		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
-		modified = false;
 		hasLatched = false;
 
 		Dvar_SetVec3(*this, value);
+		modified = false;
 	}
 
 	inline dvar_t(
@@ -151,10 +151,10 @@ struct dvar_t {
 		domain.f.max = max;
 		this->flags = flags;
 		e.push_back(Com_Format("{}", value));
-		modified = false;
 		hasLatched = false;
 
 		Dvar_SetVec4(*this, value);
+		modified = false;
 	}
 
 	inline ~dvar_t() noexcept {
@@ -975,12 +975,13 @@ bool Dvar_SetFromString(
 			dvar.type = DVAR_TYPE_BOOL;
 			Dvar_SetBool(dvar, b);
 			return true;
-		}
-		else if (dvar.type == DVAR_TYPE_BOOL) {
+		} else if (dvar.type == DVAR_TYPE_BOOL) {
 			Dvar_SetBool(dvar, b);
 			return true;
 		}
-		else {
+		else if (dvar.type == DVAR_TYPE_INT || dvar.type == DVAR_TYPE_FLOAT) {
+			;
+		} else {
 			return false;
 		}
 	}
@@ -996,6 +997,8 @@ bool Dvar_SetFromString(
 		} else if (dvar.type == DVAR_TYPE_INT) {
 			Dvar_SetInt(dvar, i);
 			return true;
+		} else if (dvar.type == DVAR_TYPE_FLOAT) {
+			;
 		} else {
 			return false;
 		}

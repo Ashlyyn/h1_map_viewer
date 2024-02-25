@@ -25,7 +25,11 @@ void GLAPIENTRY R_GlDebugOutput(
     GLenum source, GLenum type, unsigned int id, GLenum severity,
     GLsizei /*unused*/, const char* message, const void* /*unused*/
 ) {
-    if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+    if (id == 131169 || id == 131185 ||
+        id == 131218 || id == 131204 || id == 131139
+    ) {
+        return;
+    }
 
     std::string_view src = GL_DEBUG_SOURCE_STR(source);
     std::string_view t   = GL_DEBUG_TYPE_STR(type);
@@ -83,10 +87,11 @@ void R_Init() {
 
     R_RegisterDvars();
 
-    assert(R_CreateFont("consola.ttf", 0, 48, r_defaultFont));
+    bool b = R_CreateFont("consola.ttf", 0, 48, r_defaultFont);
+    assert(b);
     
     R_AddTextDraw(
-        1, nullptr, "This is a test.\nWhere the fuck i am?", 0.1f, 0.1f, 1.0f, 1.0f,
+        0, nullptr, "This is a test.\nWhere the fuck i am?", 0.1f, 0.1f, 1.0f, 1.0f,
         glm::vec3(0.77, 0.77, 0.2), true, false, r_testDrawId
     );
     R_InitCubePrim(r_cubePrim);
@@ -103,25 +108,29 @@ static void R_InitLocalClient(int localClientNum) {
     R_UpdateLocalClientView(localClientNum);
 }
 
-static void R_UpdateLocalClientView(int localClientNum) {
+static void R_UpdateOrtho(int localClientNum) {
     cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-
-    GL_CALL(glViewport,
-        (GLint)(cg.viewport.x *  Dvar_GetInt(*vid_width)), 
-        (GLint)(cg.viewport.y * Dvar_GetInt(*vid_height)),
-        (GLsizei)(cg.viewport.w * Dvar_GetInt(*vid_width)), 
-        (GLsizei)(cg.viewport.h * Dvar_GetInt(*vid_height))
-    );
 
     float left = cg.viewport.x * Dvar_GetInt(*vid_width);
     float right = cg.viewport.w * Dvar_GetInt(*vid_width) + left;
     float bottom = cg.viewport.y * Dvar_GetInt(*vid_height);
     float top = cg.viewport.h * Dvar_GetInt(*vid_height) + bottom;
     cg.camera.orthoProjection = glm::ortho(left, right, bottom, top);
+}
+
+void R_UpdateProjection(int localClientNum) {
+    cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
+
+    float w = cg.viewport.w * Dvar_GetInt(*vid_width);
+    float h = cg.viewport.h * Dvar_GetInt(*vid_height);
     cg.camera.perspectiveProjection = glm::perspective(
-        FOV_HORZ_TO_VERTICAL(cg.fov, cg.viewport.h / cg.viewport.w),
-        cg.viewport.w / cg.viewport.h, cg.nearPlane, cg.farPlane
+        glm::radians(cg.fovy), w / h, cg.nearPlane, cg.farPlane
     );
+}
+
+static void R_UpdateLocalClientView(int localClientNum) {
+    R_UpdateOrtho(localClientNum);
+    R_UpdateProjection(localClientNum);
 }
 
 static void R_RegisterDvars() {
@@ -164,7 +173,8 @@ static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
     );
     GL_CALL(glEnableVertexAttribArray, 1);
 
-    assert(R_CreateImage("container.jpg", NULL, NULL, cubePrim.tex));
+    bool b = R_CreateImage("container.jpg", NULL, NULL, cubePrim.tex);
+    assert(b);
 
     GL_CALL(glUseProgram, cubePrim.prog.program);
     R_SetUniform(cubePrim.prog.program, "uContainerTex", 0);
@@ -174,13 +184,19 @@ static void R_InitCubePrim(INOUT GfxCubePrim& cubePrim) {
 }
 
 void R_DrawFrame(int localClientNum) {
-    if (!CG_LocalClientIsActive(localClientNum))
-        return;
-
-    RB_BeginFrame();
-
     R_DrawFrameInternal(localClientNum);
+}
 
+void R_Frame() {
+    RB_BeginFrame();
+    GL_CALL(glEnable, GL_SCISSOR_TEST);
+    for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+        if (!CG_LocalClientIsActive(i))
+            continue;
+
+        R_DrawFrame(i);
+    }
+    GL_CALL(glDisable, GL_SCISSOR_TEST);
     RB_EndFrame();
 }
 
@@ -268,6 +284,22 @@ void R_DrawCube(const glm::vec3& pos, float angle, texture_t tex) {
 }
 
 static void R_DrawFrameInternal(int localClientNum) {
+    cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
+
+    GLint x = (GLint)(cg.viewport.x * Dvar_GetInt(*vid_width));
+    GLint y = (GLint)(cg.viewport.y * Dvar_GetInt(*vid_height));
+    GLsizei w = (GLsizei)(cg.viewport.w * Dvar_GetInt(*vid_width));
+    GLsizei h = (GLsizei)(cg.viewport.h * Dvar_GetInt(*vid_height));
+
+    if (Dvar_WasModified(*cg.fov)) {
+        R_UpdateProjection(localClientNum);
+        Dvar_ClearModified(*cg.fov);
+    }
+
+    GL_CALL(glViewport, x, y, w, h);
+    GL_CALL(glScissor,  x, y, w, h);
+    GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     static const std::array<glm::vec3, 10> cubePositions = {
         glm::vec3(0.0f,  0.0f,  0.0f),
         glm::vec3(2.0f,  5.0f, -15.0f),
@@ -281,8 +313,6 @@ static void R_DrawFrameInternal(int localClientNum) {
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
-    GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     /*
     R_DrawText(
         NULL, "Testing 123...", 
@@ -293,16 +323,14 @@ static void R_DrawFrameInternal(int localClientNum) {
 
     GL_CALL(glUseProgram, r_cubePrim.prog.program);
 
-    cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
     glm::vec3 pos = cg.camera.pos;
     glm::vec3 center = pos + cg.camera.front;
     glm::vec3 up = cg.camera.up;
     glm::mat4 view = glm::lookAt(pos, center, up);
     R_SetUniform(r_cubePrim.prog.program, "uView", view);
     R_SetUniform(
-        r_cubePrim.prog.program, "uPerspectiveProjection", glm::perspective(
-            glm::radians(74.0f), cg.viewport.h / cg.viewport.w, 0.1f, 100.0f
-        )
+        r_cubePrim.prog.program, "uPerspectiveProjection", 
+        cg.camera.perspectiveProjection
     );
 
     for (int i = 0; i < (int)cubePositions.size(); i++) {

@@ -365,8 +365,12 @@ auto inline R_GlCallImpl(
 #endif // GL_CALL
 
 // can't be constexpr since atan() isn't constexpr for some reason
-NO_DISCARD inline float FOV_HORZ_TO_VERTICAL(float fovh, float aspect_inv) {
-    return 2.0f * atan(tan(fovh / 2) * aspect_inv);
+NO_DISCARD inline float FOV_HORZ_TO_VERTICAL(float fovx, float aspect_inv) {
+    return 2.0f * glm::degrees(atan(tan(glm::radians(fovx) / 2) * aspect_inv));
+}
+
+NO_DISCARD inline float FOV_VERTICAL_TO_HORZ(float fovy, float aspect) {
+    return 2.0f * glm::degrees(atan(tan(glm::radians(fovy) / 2) * aspect));
 }
 
 NO_DISCARD inline float VID_ASPECT() {

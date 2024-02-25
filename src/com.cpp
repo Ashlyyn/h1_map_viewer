@@ -49,15 +49,13 @@ bool Com_Frame() {
     CL_Frame();
     DevGui_Frame();
     for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
-        cg_t& cg = CG_GetLocalClientGlobals(i);
-        if (!cg.active)
+        if(!CG_LocalClientIsActive(i))
             continue;
 
         if (DevGui_HasText(i))
             Con_ProcessInput(DevGui_TakeText(i), i);
-
-        R_DrawFrame(i);
     }
+    R_Frame();
     
     if (DevCon_HasText())
         Con_ProcessInput(DevCon_TakeText());

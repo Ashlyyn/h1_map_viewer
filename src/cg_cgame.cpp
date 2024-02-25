@@ -49,7 +49,11 @@ void CG_Init() {
 		cg.viewport.w = 1.0f;
 		cg.viewport.h = 1.0f;
 
-		cg.fov = 120.0f;
+		cg.fov = Dvar_RegisterLocalFloat(i, "cg_fov", DVAR_FLAG_NONE, 90.0f, 1.0f, 179.0f);
+		float w = cg.viewport.w * Dvar_GetInt(*vid_width);
+		float h = cg.viewport.h * Dvar_GetInt(*vid_height);
+		cg.fovy = FOV_HORZ_TO_VERTICAL(Dvar_GetFloat(*cg.fov), h / w);
+
 		cg.sensitivity = 0.1f;
 		cg.active = false;
 
@@ -59,95 +63,97 @@ void CG_Init() {
 	CG_ActivateLocalClient(0);
 }
 
-/*
-void CG_MoveForward(int localClientNum, float vel) {
-	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-	cg.camera.pos += vel * cg.camera.front;
-}
-
-void CG_MoveBackward(int localClientNum, float vel) {
-	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-	cg.camera.pos -= vel * cg.camera.front;
-}
-
-void CG_StrafeLeft(int localClientNum, float vel) {
-	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-	cg.camera.pos -= glm::normalize(
-		glm::cross(cg.camera.front, cg.camera.up)
-	) * vel;
-}
-
-void CG_StrafeRight(int localClientNum, float vel) {
-	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-	cg.camera.pos += glm::normalize(
-		glm::cross(cg.camera.front, cg.camera.up)
-	) * vel;
-}
-
-void CG_Ascend(int localClientNum, float vel) {
-	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-	cg.camera.pos += vel * cg.camera.up;
-}
-
-void CG_Descend(int localClientNum, float vel) {
-	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-	cg.camera.pos -= vel * cg.camera.up;
-}
-*/
-
-void CG_Look(int localClientNum, float x, float y) {
-	if (s_firstMouse) {
-		s_lastMouseX = x;
-		s_lastMouseY = y;
-		s_firstMouse = false;
-	}
-
-	float xoff = x - s_lastMouseX;
-	float yoff = y - s_lastMouseY;
-	s_lastMouseX = x;
-	s_lastMouseY = y;
-
-	cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
-	xoff *= cg.sensitivity;
-	yoff *= cg.sensitivity;
-
-	cg.camera.yaw   -= xoff;
-	cg.camera.pitch += yoff;
-
-	if (cg.camera.pitch > 89.0f)
-		cg.camera.pitch = 89.0f;
-	if (cg.camera.pitch < -89.0f)
-		cg.camera.pitch = -89.0f;
-
-	glm::vec3 front;
-	front.x = 
-		cos(glm::radians(cg.camera.yaw)) * cos(glm::radians(cg.camera.pitch));
-	front.y = 
-		sin(glm::radians(cg.camera.pitch));
-	front.z = 
-		sin(glm::radians(cg.camera.yaw)) * cos(glm::radians(cg.camera.pitch));
-	cg.camera.front = glm::normalize(front);
-}
-
 extern dvar_t* r_fullscreen;
 extern dvar_t* r_noBorder;
+extern dvar_t* cl_splitscreen;
 
-void CG_Frame(uint64_t deltaTime) {
+static void CL_EnterSplitscreen(int activeLocalClient) {
+	cg_t& cg0 = CG_GetLocalClientGlobals(0);
+
+	cg0.viewport.x = 0.0f;
+	cg0.viewport.y = 0.5f;
+	cg0.viewport.w = 1.0f;
+	cg0.viewport.h = 0.5f;
+
+	float w0 = cg0.viewport.w * Dvar_GetInt(*vid_width);
+	float h0 = cg0.viewport.h * Dvar_GetInt(*vid_height);
+	cg0.fovy = FOV_HORZ_TO_VERTICAL(Dvar_GetFloat(*cg0.fov), h0 / w0);
+
+	cg_t& cg1 = CG_GetLocalClientGlobals(1);
+
+	cg1.viewport.x = 0.0f;
+	cg1.viewport.y = 0.0f;
+	cg1.viewport.w = 1.0f;
+	cg1.viewport.h = 0.5f;
+
+	float w1 = cg1.viewport.w * Dvar_GetInt(*vid_width);
+	float h1 = cg1.viewport.h * Dvar_GetInt(*vid_height);
+	cg1.fovy = FOV_HORZ_TO_VERTICAL(Dvar_GetFloat(*cg1.fov), h1 / w1);
+
+	if (activeLocalClient != 0)
+		CG_ActivateLocalClient(0);
+	if (activeLocalClient != 1)
+		CG_ActivateLocalClient(1);
+}
+
+static void CL_LeaveSplitscreen(int activeLocalClient) {
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		cg_t& cg = CG_GetLocalClientGlobals(i);
+		cg.viewport.x = 0.0f;
+		cg.viewport.y = 0.0f;
+		cg.viewport.w = 1.0f;
+		cg.viewport.h = 1.0f;
+
+		float w = cg.viewport.w * Dvar_GetInt(*vid_width);
+		float h = cg.viewport.h * Dvar_GetInt(*vid_height);
+		cg.fovy = FOV_HORZ_TO_VERTICAL(Dvar_GetFloat(*cg.fov), h / w);
+
+		if (i != activeLocalClient)
+			CG_DectivateLocalClient(i);
+	}
+}
+
+void CG_Frame(uint64_t) {
+	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
+		cg_t& cg = CG_GetLocalClientGlobals(i);
+		float w = cg.viewport.w * (float)Dvar_GetInt(*vid_width);
+		float h = cg.viewport.h * (float)Dvar_GetInt(*vid_height);
+		float aspect_inv = h / w;
+		cg.fovy = FOV_HORZ_TO_VERTICAL(Dvar_GetFloat(*cg.fov), aspect_inv);
+		if(i == 0)Com_DPrintln("{}", cg.fovy);
+
 		if (!CL_HasKbmFocus(i) || CL_KeyFocus(i) != KF_GAME)
 			continue;
 
 		if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_m)) {
-			CG_ActivateLocalClient(1);
 			CL_GiveKbmFocus(1);
 			IN_Key_Clear(0);
-			CG_DectivateLocalClient(0);
+			if (!Dvar_GetBool(*cl_splitscreen)) {
+				CG_ActivateLocalClient(1);
+				CG_DectivateLocalClient(0);
+			}
 		} else if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_n)) {
-			CG_ActivateLocalClient(0);
 			CL_GiveKbmFocus(0);
 			IN_Key_Clear(1);
-			CG_DectivateLocalClient(1);
+			if (!Dvar_GetBool(*cl_splitscreen)) {
+				CG_ActivateLocalClient(0);
+				CG_DectivateLocalClient(1);
+			}
 		}
+
+		if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_j)) {
+			Dvar_SetBool(*cl_splitscreen, !Dvar_GetBool(*cl_splitscreen));
+		}
+
+		if (Dvar_WasModified(*cl_splitscreen)) {
+			if (Dvar_GetBool(*cl_splitscreen)) {
+				CL_EnterSplitscreen(i);
+			} else {
+				CL_LeaveSplitscreen(i);
+			}
+			Dvar_ClearModified(*cl_splitscreen);
+		}
+
 
 		if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_F10))
 			Dvar_SetBool(*r_noBorder, !Dvar_GetBool(*r_noBorder));
@@ -155,32 +161,30 @@ void CG_Frame(uint64_t deltaTime) {
 		if (IN_Key_WasPressedOnCurrentFrame(i, SDLK_F11))
 			Dvar_SetBool(*r_fullscreen, !Dvar_GetBool(*r_fullscreen));
 
-		float vel = 2.5f * ((float)deltaTime);
+		float vel = 40.0f;
 		if (IN_Key_IsDown(i, SDLK_LSHIFT))
-			vel *= 2;
+			vel *= 1.5f;
 
 		pm_t& pm = PM_GetLocalClientGlobals(i);
 
 		if (IN_Key_IsDown(i, SDLK_w))
 			pm.pm.cmd.vel.z =  vel;
-			//CG_MoveForward(i, vel);
 		if (IN_Key_IsDown(i, SDLK_s))
 			pm.pm.cmd.vel.z = -vel;
-			//CG_MoveBackward(i, vel);
 		if (IN_Key_IsDown(i, SDLK_a))
 			pm.pm.cmd.vel.x = -vel;
-			//CG_StrafeLeft(i, vel);
 		if (IN_Key_IsDown(i, SDLK_d))
-			pm.pm.cmd.vel.x =  vel;
-			//CG_StrafeRight(i, vel);
+			pm.pm.cmd.vel.x = vel;
 		if (IN_Key_IsDown(i, SDLK_SPACE))
 			pm.pm.cmd.vel.y =  vel;
-			//CG_Ascend(i, vel);
 		if (IN_Key_IsDown(i, SDLK_LCTRL))
 			pm.pm.cmd.vel.y = -vel;
-			//CG_Descend(i, vel);
 
-		cg_t& cg = CG_GetLocalClientGlobals(i);
+		if (pm.pm.cmd.vel.x != 0 && pm.pm.cmd.vel.y != 0) {
+			pm.pm.cmd.vel.x *= 0.5f;
+			pm.pm.cmd.vel.y *= 0.5f;
+		}
+
 		float x = IN_Mouse_X(i);
 		float y = IN_Mouse_Y(i);
 		if (s_lastMouseX != x || s_lastMouseY != y) {
@@ -190,22 +194,20 @@ void CG_Frame(uint64_t deltaTime) {
 				s_firstMouse = false;
 			}
 
-			float xoff = x - s_lastMouseX;
-			float yoff = y - s_lastMouseY;
+			float xoff   = x - s_lastMouseX;
+			float yoff   = y - s_lastMouseY;
 			s_lastMouseX = x;
 			s_lastMouseY = y;
-			Com_DPrintln("x={}, y={}", xoff, yoff);
 
 			xoff *= cg.sensitivity;
 			yoff *= cg.sensitivity;
 			pm.pm.cmd.yaw   = -xoff;
 			pm.pm.cmd.pitch = -yoff;
-			//CG_Look(i, IN_Mouse_X(i), IN_Mouse_Y(i));
 		}
 
 		pm.pm.cmd.serverTime = Sys_Milliseconds();
 		PmoveSingle(pm.pm, pm.pml);
-		cg.camera.pos = pm.pm.ps->origin;
+		cg.camera.pos   = pm.pm.ps->origin;
 		cg.camera.front = pm.pml.forward;
 	}
 }

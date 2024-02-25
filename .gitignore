@@ -1,8 +1,10 @@
 /.vs
 /.vscode
 CMakeSettings.json
-/deps/*
+/deps/SDL_image/*
+/deps/SDL_image_build
 /build
+/assets/maps/*
 *.png
 *.jpg
 *.ttf

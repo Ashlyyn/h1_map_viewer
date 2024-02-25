@@ -21,7 +21,8 @@ dvar_t* vid_height;
 static uint64_t s_timeBase;
 
 void Sys_InitThreads() {
-    assert(Sys_SpawnDevConThread(DevCon_Thread));
+    bool b = Sys_SpawnDevConThread(DevCon_Thread);
+    assert(b);
 }
 
 void Sys_Init() {

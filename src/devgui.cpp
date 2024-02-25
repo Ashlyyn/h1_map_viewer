@@ -22,11 +22,11 @@ void DevGui_Init() {
 		dgl_t& dgl = DevGui_GetLocalClientLocals(i);
 		dgl.buffer = "> ";
 
-		assert(R_AddTextDraw(
+		R_AddTextDraw(
 			i, nullptr, dgl.buffer,
 			0.1f, 0.9f, 1.0f, 1.0f, glm::vec3(0.9f, 0.2f, 0.2f),
 			false, false, dgl.promptDrawId
-		));
+		);
 	}
 }
 

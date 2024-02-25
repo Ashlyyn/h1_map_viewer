@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include "cg_cgame.hpp"
+#include "db_files.hpp"
 #include "dvar.hpp"
 #include "gfx.hpp"
 #include "gfx_text.hpp"
@@ -23,6 +24,8 @@ struct cl_t {
 
 std::array<cl_t, MAX_LOCAL_CLIENTS> s_cl;
 
+dvar_t* cl_splitscreen;
+
 static uint64_t s_lastFpsDrawTime;
 static uint64_t s_lastFpsDrawDelta;
 
@@ -35,6 +38,8 @@ cl_t& CL_GetLocalClientGlobals(int localClientNum) {
 }
 
 void CL_Init() {
+	cl_splitscreen = &Dvar_RegisterBool("cl_splitscreen", DVAR_FLAG_NONE, false);
+
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
 		cl_t& cl = CL_GetLocalClientGlobals(i);
 		cl.drawfps = Dvar_RegisterLocalBool(i, "cl_drawfps", DVAR_FLAG_NONE, false);
@@ -50,6 +55,8 @@ void CL_Init() {
 	}
 
 	CL_GiveKbmFocus(0);
+	bool b = CL_LoadMap("c40.map");
+	assert(b);
 }
 
 void CL_EnableFpsCounter(int localClientNum, bool enable) {
@@ -112,7 +119,15 @@ void CL_SetKeyFocus(int localClientNum, KeyFocus f) {
 	CG_GetLocalClientGlobals(localClientNum).keyfocus = f;
 }
 
+bool CL_LoadMap(std::string_view map_name) {
+	return DB_LoadMap(map_name).pos >= 0;
+}
+
 void CL_Shutdown() {
+	Dvar_SetBool(*cl_splitscreen, false);
+	Dvar_Unregister("cl_splitscreen");
+	cl_splitscreen = nullptr;
+
 	for (int i = 0; i < MAX_LOCAL_CLIENTS; i++) {
 		cl_t& cl = CL_GetLocalClientGlobals(i);
 		Dvar_SetBool(*cl.drawfps, false);

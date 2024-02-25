@@ -3,18 +3,18 @@
 #include <filesystem>
 #include <map>
 
-#include "fs_files.hpp"
-
 enum AssetType {
 	AT_SHADER,
 	AT_FONT,
 	AT_IMAGE,
+	AT_MAP,
 };
 
 std::map<AssetType, std::string_view> s_assetDirs = {
 	{ AT_SHADER, "shaders" },
 	{ AT_FONT,   "fonts"   },
-	{ AT_IMAGE,  "images"  }
+	{ AT_IMAGE,  "images"  },
+	{ AT_MAP,    "maps"    }
 };
 
 std::string_view DB_AssetDirForType(AssetType at) {
@@ -34,6 +34,10 @@ NO_DISCARD std::filesystem::path DB_AssetPath(
 
 NO_DISCARD std::filesystem::path DB_ImagePath(std::string_view image_name) {
 	return DB_AssetPath(AT_IMAGE, image_name);
+}
+
+NO_DISCARD std::filesystem::path DB_MapPath(std::string_view map_name) {
+	return DB_AssetPath(AT_MAP, map_name);
 }
 
 std::string DB_LoadAsset_Text(
@@ -58,4 +62,8 @@ std::vector<std::byte> DB_LoadFont(std::string_view font_name) {
 
 std::vector<std::byte> DB_LoadImage(std::string_view image_name) {
 	return DB_LoadAsset_Binary(AT_IMAGE, image_name);
+}
+
+NO_DISCARD StreamFile DB_LoadMap(std::string_view map_name) {
+	return FS_StreamFile(DB_MapPath(map_name));
 }

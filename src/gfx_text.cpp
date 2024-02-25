@@ -9,7 +9,7 @@
 #include "dvar.hpp"
 #include "gfx_shaders.hpp"
 #include "gfx_uniform.hpp"
-#include "sys.hpp"
+#include "sys.hpp" 
 
 extern dvar_t* vid_width;
 extern dvar_t* vid_height;
@@ -140,8 +140,10 @@ void R_DrawText(
     if (font == nullptr)
         font = &r_defaultFont;
 
-    x *= Dvar_GetInt(*vid_width);
-    y *= Dvar_GetInt(*vid_height);
+    cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
+
+    x *= cg.viewport.w * Dvar_GetInt(*vid_width);
+    y *= cg.viewport.h * Dvar_GetInt(*vid_height);
 
     float firstX = x;
 
@@ -154,8 +156,6 @@ void R_DrawText(
     GL_CALL(glBindTexture, GL_TEXTURE_2D, font->tex);
 
     R_SetUniform(font->prog.program, "uTextColor", color);
-
-    cg_t& cg = CG_GetLocalClientGlobals(localClientNum);
 
     R_SetUniform(
         font->prog.program, "uOrthoProjection", cg.camera.orthoProjection
@@ -358,7 +358,8 @@ bool R_ActivateTextDraw(int localClientNum, size_t id, bool active) {
 
 bool R_RemoveTextDraw(int localClientNum, size_t id) {
     GfxTextDraw* d = nullptr;
-    assert(R_GetTextDraw(localClientNum, id, d));
+    if (!R_GetTextDraw(localClientNum, id, d))
+        return false;
 
     if (d->free == true)
         return false;
