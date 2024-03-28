@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(h1_map_viewer)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_REQUIRED ON)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	set(GCC true)
@@ -8,13 +9,15 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CLANG true)
 endif()
 
-set(CMAKE_BUILD_TYPE Release)
-
-include("$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+set(VCPKG_TOOLCHAIN "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake") 
+if(EXISTS VCPKG_TOOLCHAIN)
+    include(VCPKG_TOOLCHAIN)
+endif()
 
 find_package(Freetype REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
 
 add_executable(h1_map_viewer 
 	src/cg_cgame.cpp src/com.cpp src/font.cpp src/fs_files.cpp src/gfx.cpp 
