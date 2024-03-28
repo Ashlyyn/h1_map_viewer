@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <charconv>
 #include <deque>
 #include <format>
 #include <vector>
@@ -102,10 +103,10 @@ bool inline Com_Parse(std::string_view s, OUT int& value) {
 
 bool inline Com_Parse(std::string_view s, OUT float& value) {
     value = 0.0f;
-    auto r = std::from_chars(s.data(), s.data() + s.size(), value);
-    if (r.ec == std::errc()) {
-        return true;
-    }
+    //auto r = std::from_chars(s.data(), s.data() + s.size(), value);
+    //if (r.ec == std::errc()) {
+    //    return true;
+    //}
 
     return false;
 }
@@ -114,18 +115,18 @@ bool inline Com_Parse(const std::array<std::string_view, 2>& v, OUT glm::vec2& v
     value = glm::vec2(0.0f, 0.0f);
 
     float x = 0.0f;
-    std::string_view xs = std::string_view(v[0]);
-    auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
-    if (rx.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view xs = std::string_view(v[0]);
+    //auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
+    //if (rx.ec != std::errc()) {
+    //    return false;
+    //}
 
     float y = 0.0f;
-    std::string_view ys = std::string_view(v[1]);
-    auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
-    if (ry.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view ys = std::string_view(v[1]);
+    //auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
+    //if (ry.ec != std::errc()) {
+    //    return false;
+    //}
 
     value = glm::vec2(x, y);
 
@@ -146,25 +147,25 @@ bool inline Com_Parse(const std::array<std::string_view, 3>& v, OUT glm::vec3& v
     value = glm::vec3(0.0f, 0.0f, 0.0f);
 
     float x = 0.0f;
-    std::string_view xs = std::string_view(v[0]);
-    auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
-    if (rx.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view xs = std::string_view(v[0]);
+    //auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
+    //if (rx.ec != std::errc()) {
+    //    return false;
+    //}
 
     float y = 0.0f;
-    std::string_view ys = std::string_view(v[1]);
-    auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
-    if (ry.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view ys = std::string_view(v[1]);
+    //auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
+    //if (ry.ec != std::errc()) {
+    //    return false;
+    //}
 
     float z = 0.0f;
-    std::string_view zs = std::string_view(v[2]);
-    auto rz = std::from_chars(zs.data(), zs.data() + zs.size(), z);
-    if (rz.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view zs = std::string_view(v[2]);
+    //auto rz = std::from_chars(zs.data(), zs.data() + zs.size(), z);
+    //if (rz.ec != std::errc()) {
+    //    return false;
+    //}
 
     value = glm::vec3(x, y, z);
 
@@ -185,32 +186,32 @@ bool inline Com_Parse(const std::array<std::string_view, 4>& v, OUT glm::vec4& v
     value = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
     float x = 0.0f;
-    std::string_view xs = std::string_view(v[0]);
-    auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
-    if (rx.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view xs = std::string_view(v[0]);
+    //auto rx = std::from_chars(xs.data(), xs.data() + xs.size(), x);
+    //if (rx.ec != std::errc()) {
+    //    return false;
+    //}
 
     float y = 0.0f;
-    std::string_view ys = std::string_view(v[1]);
-    auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
-    if (ry.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view ys = std::string_view(v[1]);
+    //auto ry = std::from_chars(ys.data(), ys.data() + ys.size(), y);
+    //if (ry.ec != std::errc()) {
+    //    return false;
+    //}
 
     float z = 0.0f;
-    std::string_view zs = std::string_view(v[2]);
-    auto rz = std::from_chars(zs.data(), zs.data() + zs.size(), z);
-    if (rz.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view zs = std::string_view(v[2]);
+    //auto rz = std::from_chars(zs.data(), zs.data() + zs.size(), z);
+    //if (rz.ec != std::errc()) {
+    //    return false;
+    //}
 
     float w = 0.0f;
-    std::string_view ws = std::string_view(v[3]);
-    auto rw = std::from_chars(ws.data(), ws.data() + ws.size(), w);
-    if (rw.ec != std::errc()) {
-        return false;
-    }
+    //std::string_view ws = std::string_view(v[3]);
+    //auto rw = std::from_chars(ws.data(), ws.data() + ws.size(), w);
+    //if (rw.ec != std::errc()) {
+    //    return false;
+    //}
 
     value = glm::vec4(x, y, z, w);
 
@@ -229,33 +230,39 @@ bool inline Com_Parse(std::string_view s, OUT glm::vec4& value) {
 
 template<>
 struct std::formatter<glm::vec2> {
-    constexpr auto parse(std::format_parse_context& ctx) {
+    template<class ParseCtx>
+    constexpr auto parse(ParseCtx& ctx) const {
         return ctx.begin();
     }
 
-    auto format(const glm::vec2& v, std::format_context& ctx) const {
+    template<class FmtCtx>
+    auto format(const glm::vec2& v, FmtCtx& ctx) const {
         return std::format_to(ctx.out(), "{} {}", v.x, v.y);
     }
 };
 
 template<>
 struct std::formatter<glm::vec3> {
-    constexpr auto parse(std::format_parse_context& ctx) {
+    template<class ParseCtx>
+    constexpr auto parse(ParseCtx& ctx) const {
         return ctx.begin();
     }
 
-    auto format(const glm::vec3& v, std::format_context& ctx) const {
+    template<class FmtCtx>
+    auto format(const glm::vec3& v, FmtCtx& ctx) const {
         return std::format_to(ctx.out(), "{} {} {}", v.x, v.y, v.z);
     }
 };
 
 template<>
 struct std::formatter<glm::vec4> {
-    constexpr auto parse(std::format_parse_context& ctx) {
+    template<class ParseCtx>
+    constexpr auto parse(ParseCtx& ctx) const {
         return ctx.begin();
     }
 
-    auto format(const glm::vec4& v, std::format_context& ctx) const {
+    template<class FmtCtx>
+    auto format(const glm::vec4& v, FmtCtx& ctx) const {
         return std::format_to(ctx.out(), "{} {} {} {}", v.x, v.y, v.z, v.w);
     }
 };

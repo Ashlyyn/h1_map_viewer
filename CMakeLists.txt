@@ -79,6 +79,12 @@ if(MSVC)
 		"/Zc:__STDC__" "/W4" "/wd4005" "/bigobj"
 		"/WX"
 	)
-elseif(CLANG OR GCC)
+endif()
+
+if(CLANG AND APPLE)
+    target_compile_options(h1_map_viewer PRIVATE "-Wno-undef-prefix")
+endif()
+
+if(CLANG OR GCC)
 	target_compile_options(h1_map_viewer PRIVATE "-pedantic-errors")
 endif()
