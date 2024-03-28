@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.19)
 project(h1_map_viewer)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_REQUIRED ON)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_REQUIRED ON)
 
@@ -23,7 +27,9 @@ find_package(GLEW REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 
-add_executable(h1_map_viewer 
+add_executable(h1_map_viewer
+    src/acommon/a_string.c
+ 
 	src/cg_cgame.cpp src/com.cpp src/font.cpp src/fs_files.cpp src/gfx.cpp 
 	src/gfx_backend.cpp  src/in_input.cpp src/main.cpp src/sys.cpp
  	src/db_files.cpp src/cmd_commands.cpp src/cl_client.cpp src/devgui.cpp 
