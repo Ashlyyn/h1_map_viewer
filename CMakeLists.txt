@@ -9,6 +9,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CLANG true)
 endif()
 
+if(APPLE)
+    enable_language(OBJC)
+endif()
+
 set(VCPKG_TOOLCHAIN "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake") 
 if(EXISTS VCPKG_TOOLCHAIN)
     include(VCPKG_TOOLCHAIN)
